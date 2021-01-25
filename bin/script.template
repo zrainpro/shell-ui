@@ -1,0 +1,76 @@
+#!/usr/bin/env node
+const program = require('commander');
+const path = require('path');
+const shell = require('shelljs');
+const packageInfo = require('../../package.json');
+const shellInfo = require('../../json/shell.json');
+
+const command = shellInfo.shell[`'{{command}}'`];
+
+if (!command.enable) {
+  // 如果没有启用脚本, 不做任何处理
+  return
+}
+
+program
+  .version(packageInfo.version, '-v, --v, --version')
+
+// 如果有子命令, 注册子命令
+if (command.children && command.children.length) {
+  command.children.forEach(item => {
+    let temp = program;
+    // 不存在指令的数据为脏数据, 不处理
+    if (!item.command) return;
+    // 没有启用的指令, 不做处理
+    if (!item.enable) return;
+
+    temp = temp.command(item.command);
+    if (item.alias && item.alias !== item.command) {
+      temp = temp.alias(item.alias);
+    }
+    if (item.description) {
+      temp = temp.description(item.description);
+    }
+    temp.action((cmd, args = []) => {
+      if (item.shell) {
+        runShell(item, args, path.resolve(__dirname, '../userShell/`{{command}}`/' + item.command + '.sh ')); // 执行 shell 脚本或者 js 脚本
+      } else {
+        console.log('亲~ 你是不是忘记设置脚本内容了, 手动吃瓜')
+      }
+    })
+  });
+}
+
+// 注册主命令, 如果该命令存在 shell 脚本或者 javascript 脚本
+program.action(function(cmd, ...args) {
+  if (command.shell) {
+    runShell(command, args, path.resolve(__dirname, '../userShell/`{{command}}`.sh ')); // 执行 shell 脚本或者 js 脚本
+  } else {
+    console.log('亲~ 你是不是忘记设置脚本内容了, 手动吃瓜')
+  }
+})
+program.parse(process.argv);
+
+if(!command.shell && (!program.args || !program.args.length)){
+  program.help()
+}
+
+// 执行 js 命令
+function runShell(item, args, shellPath) {
+  // 如果脚本类型是 shell 脚本
+  if (item.type === 'shell') {
+    shell
+      .chmod('777', shellPath)
+      .exec(shellPath + ' ' + args.join(' ').replace(/,/g, ' '), null, function (code) {
+        if (code !== 0) {
+          shell.echo('程序执行出错');
+          shell.exit(1);
+        }
+      })
+  }
+  // 如果脚本类型是 javascript 类型的
+  if (item.type === 'javascript') {
+    const selfFunction = new Function(item.shell);
+    selfFunction.call(null);
+  }
+}
