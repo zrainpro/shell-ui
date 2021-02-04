@@ -1,6 +1,6 @@
 {
   "name": "@ali/shell-ui",
-  "version": "0.0.2",
+  "version": "0.0.6",
   "description": "a visualization shell manage tools",
   "main": "index.js",
   "scripts": {

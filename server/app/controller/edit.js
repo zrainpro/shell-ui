@@ -63,7 +63,7 @@ class Edit extends Base {
       });
       // 如果 脚本类型是 shell 脚本, 创建子脚本的 sh 可执行文件
       if (data.type === 'shell') {
-        fs.writeFileSync(path.resolve(__dirname, `../../../lib/userShell/${parent.command}/${data.command}.sh`), data.shell);
+        fs.writeFileSync(path.resolve(__dirname, `../../../../shell-ui-database/lib/userShell/${parent.command}/${data.command}.sh`), data.shell);
       }
       // 设置完数据保存到文件
       json.write();
@@ -165,7 +165,7 @@ class Edit extends Base {
           // 创建子脚本
           oldCommand.children.forEach(item => {
             if (item.type === 'shell') {
-              fs.writeFileSync(path.resolve(__dirname, `../../../lib/userShell/${data.command}/${item.command}.sh`), item.shell)
+              fs.writeFileSync(path.resolve(__dirname, `../../../../shell-ui-database/lib/userShell/${data.command}/${item.command}.sh`), item.shell)
             }
           });
         }
@@ -180,7 +180,7 @@ class Edit extends Base {
         });
         // 如果更新了 shell 脚本, 那么需要重新写入 sh 文件
         if (oldCommand.shell !== data.shell) {
-          fs.writeFileSync(path.resolve(__dirname, `../../../lib/userShell/${data.command}.sh`), data.shell);
+          fs.writeFileSync(path.resolve(__dirname, `../../../../shell-ui-database/lib/userShell/${data.command}.sh`), data.shell);
         }
         // 然后写入数据
         json.write();
@@ -200,7 +200,7 @@ class Edit extends Base {
           oldItm = oldParentCommand.children.find(item => item.id === data.id);
           if (oldItm && oldItm.type === 'shell') {
             // 删除旧的子 shell 脚本
-            shell.rm('-f', path.resolve(__dirname, `../../../lib/userShell/${oldParentCommand.command}/${oldItm.command}.sh`));
+            shell.rm('-f', path.resolve(__dirname, `../../../../shell-ui-database/lib/userShell/${oldParentCommand.command}/${oldItm.command}.sh`));
           }
         }
         // 在将新的子指令写入对应的父指令
@@ -219,7 +219,7 @@ class Edit extends Base {
         });
         // 如果是 shell 删除旧的文件夹中的 shell 脚本, 并创建新的脚本
         if (data.type === 'shell') {
-          fs.writeFileSync(path.resolve(__dirname, `../../../lib/userShell/${parentCommand.command}/${data.command}.sh`), data.shell || '');
+          fs.writeFileSync(path.resolve(__dirname, `../../../../shell-ui-database/lib/userShell/${parentCommand.command}/${data.command}.sh`), data.shell || '');
         }
         // 保存到 json
         json.write();
@@ -233,7 +233,7 @@ class Edit extends Base {
         // 如果修改了子指令的 command 并且 type 是 shell 类型的
         if (item.command !== data.command && item.type === 'shell') {
           // 删除旧的子指令
-          shell.rm('-f', path.resolve(__dirname, `../../../lib/userShell/${parent.command}/${item.command}.sh`));
+          shell.rm('-f', path.resolve(__dirname, `../../../../shell-ui-database/lib/userShell/${parent.command}/${item.command}.sh`));
         }
         item.command = data.command;
         item.alias = data.alias;
@@ -242,7 +242,7 @@ class Edit extends Base {
         item.shell = data.shell || '';
         // 如果新的子指令是 shell 类型的, 创建新的子 shell 脚本
         if (item.type === 'shell') {
-          fs.writeFileSync(path.resolve(__dirname, `../../../lib/userShell/${parent.command}/${item.command}.sh`), item.shell);
+          fs.writeFileSync(path.resolve(__dirname, `../../../../shell-ui-database/lib/userShell/${parent.command}/${item.command}.sh`), item.shell);
         }
         json.write();
       }
@@ -287,7 +287,7 @@ class Edit extends Base {
     } else {
       // 删除子脚本的要同时删除 shell 子脚本文件
       if (command.type === 'shell') {
-        shell.rm('-f', path.resolve(__dirname, `../../../lib/userShell/${command.parent}/${command.command}.sh`));
+        shell.rm('-f', path.resolve(__dirname, `../../../../shell-ui-database/lib/userShell/${command.parent}/${command.command}.sh`));
       }
       // 删除子脚本数据
       const parent = json.get(command.parent);
@@ -343,7 +343,7 @@ class Edit extends Base {
         if (command.children && command.children.length) {
           command.children.forEach(item => {
             if (item.type === 'shell') {
-              fs.writeFileSync(path.resolve(__dirname, `../../../lib/userShell/${command.command}/${item.command}.sh`), item.shell)
+              fs.writeFileSync(path.resolve(__dirname, `../../../../shell-ui-database/lib/userShell/${command.command}/${item.command}.sh`), item.shell)
             }
           });
         }

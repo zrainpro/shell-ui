@@ -2,7 +2,7 @@
 const program = require('commander');
 const path = require('path');
 const shell = require('shelljs');
-const packageInfo = require('../../package.json');
+const packageInfo = require('../../../shell-ui/package.json');
 const shellInfo = require('../../json/shell.json');
 
 const command = shellInfo.shell[`'{{command}}'`];

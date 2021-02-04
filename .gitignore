@@ -5,7 +5,6 @@ yarn.lock
 json
 lib/userScript/*
 lib/userShell/*
-server/web/*
 
 
 # local env files
