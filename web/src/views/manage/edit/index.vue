@@ -49,8 +49,7 @@
             size="large"
             @change="handleChange"
         >
-          <a-select-option value="shell">shell</a-select-option>
-          <a-select-option value="javascript">javascript</a-select-option>
+          <a-select-option v-for="item in state.shellType" :key="item" :value="item">{{item}}</a-select-option>
         </a-select>
       </Label>
     </div>
@@ -72,6 +71,13 @@
     setup() {
       const state = reactive({
         shells: [],
+        shellType: [
+          'shell',
+          'javascript',
+          'python',
+          'java',
+          'go'
+        ],
         form: {
           command: '',
           alias: '',
@@ -116,6 +122,25 @@
     },
     methods: {
       handleChange() {
+        console.log(this.state.form.type);
+        if (this.state.form.type === 'java') {
+          // java 的代码给出初始代码并给出提示
+          this.state.form.shell = `/*
+* java 代码不支持 publish, 只允许写 class
+* 支持写多个 class, 调用指定 class 只需要在命令行中输入:
+    [command] class名
+* 不写 class 名默认执行第一个 class
+*/
+class YourClass {
+    /* 第一个Java程序
+     * 它将输出字符串 Hello World
+     */
+    public static void main(String[] args) {
+        System.out.println("Hello World"); // 输出 Hello World
+    }
+}
+          `
+        }
       },
       cancel() {
         this.$router.go(-1);

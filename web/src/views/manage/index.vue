@@ -37,6 +37,7 @@
       <div class="button-group" style="justify-content: flex-end">
         <a-button type="primary" ghost @click="addShell">新增</a-button>
         <a-button type="primary" ghost @click="exportFile">导出</a-button>
+        <a-button type="primary" ghost @click="importFile">导入</a-button>
         <!--    暂时屏蔽批量删除    -->
         <!-- <a-button type="danger" ghost>删除</a-button> -->
       </div>
@@ -58,13 +59,7 @@
         <template #operation="{ record }">
           <!-- 自身脚本禁止修改删除 -->
           <a-button v-if="record.command !== 'shell' && record.parent !== 'shell'" type="link" @click="editShell(record)">编辑</a-button>
-          <a-popconfirm
-              v-if="record.command !== 'shell' && record.parent !== 'shell'"
-              title="您确定要删除嘛?该操作不可恢复!!!"
-              @confirm="deleteShell(record)"
-          >
-            <a-button type="link">删除</a-button>
-          </a-popconfirm>
+          <a-button type="link" @click="deleteShell(record)">删除</a-button>
         </template>
       </a-table>
     </div>
@@ -191,6 +186,32 @@
             document.body.removeChild(a);
           }
         })
+      },
+      // 导入指令文件
+      importFile() {
+        // 先创建 file 的 input
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        input.style = 'position: absolute;top: 0;left: 0;z-index: -999;opacity: 0;';
+        input.multiple = false;
+        input.onchange = (e) => {
+          console.log(e);
+          const file = e.target.files[0];
+          const formData = new FormData();
+          console.log(file);
+          formData.append('file', file)
+          this.apiPost('/api/import', formData, {
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded'
+            }
+          }).then(res => {
+            console.log(res);
+          })
+          console.log(file);
+        }
+        document.body.appendChild(input);
+        input.click();
       }
     }
   }

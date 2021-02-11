@@ -7,6 +7,21 @@ const shellInfo = require('../../json/shell.json');
 
 const command = shellInfo.shell[`'{{command}}'`];
 
+const fileType = {
+  shell: 'sh',
+  javascript: 'js', // 不需要
+  java: 'java',
+  python: 'py',
+  go: 'go'
+}
+const runStr = {
+  shell: '', // 不需要
+  javascript: '', // 不需要
+  java: '', // 执行起来比较特殊需要编译, 特殊处理
+  python: 'python',
+  go: 'go run'
+}
+
 if (!command.enable) {
   // 如果没有启用脚本, 不做任何处理
   return
@@ -33,7 +48,7 @@ if (command.children && command.children.length) {
     }
     temp.action((cmd, args = []) => {
       if (item.shell) {
-        runShell(item, args, path.resolve(__dirname, '../userShell/`{{command}}`/' + item.command + '.sh ')); // 执行 shell 脚本或者 js 脚本
+        runShell(item, args, path.resolve(__dirname, '../userShell/`{{command}}`/' + item.command + `.${fileType[item.type]}`)); // 执行 shell 脚本或者 js 脚本
       } else {
         console.log('亲~ 你是不是忘记设置脚本内容了, 手动吃瓜')
       }
@@ -44,7 +59,7 @@ if (command.children && command.children.length) {
 // 注册主命令, 如果该命令存在 shell 脚本或者 javascript 脚本
 program.action(function(cmd, ...args) {
   if (command.shell) {
-    runShell(command, args, path.resolve(__dirname, '../userShell/`{{command}}`.sh ')); // 执行 shell 脚本或者 js 脚本
+    runShell(command, args, path.resolve(__dirname, `../userShell/`{{command}}`.${fileType[command.type]}`)); // 执行 shell 脚本或者 js 脚本
   } else {
     console.log('亲~ 你是不是忘记设置脚本内容了, 手动吃瓜')
   }
@@ -66,11 +81,51 @@ function runShell(item, args, shellPath) {
           shell.echo('程序执行出错');
           shell.exit(1);
         }
-      })
-  }
-  // 如果脚本类型是 javascript 类型的
-  if (item.type === 'javascript') {
+      });
+  } else if (item.type === 'javascript') {
+    // 如果脚本类型是 javascript 类型的
     const selfFunction = new Function(item.shell);
     selfFunction.call(null);
+  } else if (item.type === 'java') {
+    // todo 考虑复用编译结果, 避免每次运行都编译
+    // 因为 java 需要编译, 同时要判断 java 的代码是否发生了变化, 这里需要引入 md5 进行处理
+    const dirPath = shellPath.replace(/[^\/]+\.[^\/]+/g, '');
+    let params = args.join(' ').replace(/,/g, ' ');
+    if (!args.length) {
+      const className = item.shell.match(/class [^\s]+/);
+      if (className) {
+        params = className[0].replace(/^class/, '');
+      } else {
+        // 根本没有写 java 代码, 报出错误
+        console.log('小糊涂, 你是不是忘记写 java 代码了...');
+        return
+      }
+    }
+    shell
+      .chmod('777', shellPath)
+      .exec(`javac ${shellPath}`, null, function (code) {
+        if (code !== 0) {
+          shell.echo('程序执行出错');
+          shell.exit(1);
+        } else {
+          // 执行文件
+          shell.exec(`java -cp ${dirPath} ${params}`, null, function (code) {
+              if (code !== 0) {
+                shell.echo('程序执行出错');
+                shell.exit(1);
+              }
+            });
+        }
+      });
+  } else {
+    // 如果脚本是 python 或者其他类型
+    shell
+      .chmod('777', shellPath)
+      .exec(`${runStr[item.type]} ${shellPath} ${args.join(' ').replace(/,/g, ' ')}`, null, function (code) {
+        if (code !== 0) {
+          shell.echo('程序执行出错');
+          shell.exit(1);
+        }
+      });
   }
 }
