@@ -17,8 +17,7 @@
               @change="onSearch"
           >
             <a-select-option value="all">全部</a-select-option>
-            <a-select-option value="shell">shell</a-select-option>
-            <a-select-option value="javascript">js脚本</a-select-option>
+            <a-select-option v-for="item in state.supportScript" :key="item.value" :value="item.value">{{item.label}}</a-select-option>
           </a-select>
         </Label>
         <Label name="状态">
@@ -90,7 +89,14 @@
         data: []
       })
       let state = reactive({
-        selected: []
+        selected: [],
+        supportScript: [
+          { value: 'shell', label: 'shell' },
+          { value: 'javascript', label: 'js脚本' },
+          { value: 'python', label: 'Python' },
+          { value: 'java', label: 'java' },
+          { value: 'go', label: 'go' }
+        ]
       });
       const rowSelection = {
         onChange: (selectedRowKeys, selectedRows) => {
