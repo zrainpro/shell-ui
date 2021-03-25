@@ -71,7 +71,7 @@ class Edit extends Base {
         shell.rm('-f', path.resolve(__dirname, `../../../../shell-ui-database/lib/userShell/${command.parent}/${command.command}.sh`));
       }
       // 删除子脚本数据
-      const parent = json.get(command.parent);
+      const parent = shellData[command.parent];
       if (parent) {
         parent.children = parent.children.filter(item => item.id !== command.id);
         json.write();

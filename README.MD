@@ -10,3 +10,4 @@ shell
 # todo
 - 支持 npm 包引入
 - 支持执行文件上传
+- window 系统支持

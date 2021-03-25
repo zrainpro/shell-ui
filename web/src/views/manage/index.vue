@@ -78,13 +78,13 @@
       // 表格展示的信息
       const table = reactive({
         columns: [
-          { title: 'command', dataIndex: 'command', key: 'command', width: 100 },
-          { title: '简写', dataIndex: 'alias', key: 'alias', width: 70 },
+          { title: 'command', dataIndex: 'command', key: 'command', width: 120 },
+          { title: '简写', dataIndex: 'alias', key: 'alias', width: 80 },
           { title: '脚本类型', dataIndex: 'type', key: 'type', width: 80 },
           { title: '是否启用', dataIndex: 'enable', key: 'enable', width: 100, slots: { customRender: 'enable' } },
           { title: '简介', dataIndex: 'description', key: 'description', width: 120, ellipsis: true },
           { title: '脚本', dataIndex: 'shell', key: 'shell', width: 240, ellipsis: true },
-          { title: '操作', dataIndex: 'id', key: 'id', width: 160, slots: { customRender: 'operation' } }
+          { title: '操作', dataIndex: 'id', key: 'id', width: 130, slots: { customRender: 'operation' } }
         ],
         data: []
       })

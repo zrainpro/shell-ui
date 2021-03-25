@@ -84,7 +84,7 @@ function runShell(item, args, shellPath) {
       });
   } else if (item.type === 'javascript') {
     // 如果脚本类型是 javascript 类型的
-    const selfFunction = new Function(item.shell);
+    const selfFunction = new Function(item.shell.replace(/\\n/g, ''));
     selfFunction.call(null);
   } else if (item.type === 'java') {
     // todo 考虑复用编译结果, 避免每次运行都编译
