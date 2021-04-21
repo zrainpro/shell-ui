@@ -31,7 +31,12 @@ function reLoadPackage (command) {
       if (fs.existsSync(shellPath) && fs.lstatSync(shellPath).isSymbolicLink(shellPath)) {
         shell.rm('-r', shellPath);
       }
-      fs.symlinkSync(path.resolve(__dirname, `../../../../shell-ui-database/lib/userScript/${command.command}.js`), shellPath);
+      if (process.platform === 'win32') {
+        // 支持 window 系统
+        fs.symlinkSync(path.resolve(__dirname, `../../../../shell-ui-database/lib/userScript/${command.command}.js`), shellPath, 'junction');
+      } else {
+        fs.symlinkSync(path.resolve(__dirname, `../../../../shell-ui-database/lib/userScript/${command.command}.js`), shellPath);
+      }
       shell.chmod('777', shellPath); // 程序可执行
       resolve();
     } else {
