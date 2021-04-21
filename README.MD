@@ -14,6 +14,8 @@ shell
 ### 发布记录
 release 0.1.2
 - 支持 window 系统
+- 修复初始化的时候没有处理完就退出脚本导致脚本不能执行
+- 修复 centos 下脚本执行失败(文件结尾符号要是 ff unix 的)
 release 0.1.1
 - 修复若干 bug
 - 前端脚本筛选支持 python/java/go
