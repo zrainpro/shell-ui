@@ -18,7 +18,6 @@ const checkUpdate = require('../utils/checkUpdate');
 
   program.action(function(cmd, ...args) {
     shell
-      .chmod('777', shellPath)
       .exec('node ' + path.resolve(__dirname, '../server/app/index.js'), null, function (code) {
         if (code !== 0) {
           shell.echo('程序执行出错, 请升级到最新版本呢!');

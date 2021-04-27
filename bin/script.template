@@ -1,10 +1,9 @@
 #!/usr/bin/env node
 const program = require('commander');
+const fs = require('fs');
 const path = require('path');
 const shell = require('shelljs');
 const shellInfo = require('../../json/shell.json');
-const fs = require('fs');
-const path = require('path');
 
 let packageInfo = { version: '您还没有安装 shell-ui 呢, 快来执行 npm i -g shell-ui 来安装体验吧' };
 if (fs.existsSync('../../../shell-ui/package.json')) {

@@ -3,7 +3,7 @@ const shell = require('shelljs');
 const path = require('path');
 const fs = require('fs');
 const JSONDB = require('../../../utils/jsonDB');
-const windowInstall = require('./')
+const windowInstall = require('./windowsInstall');
 
 const fileType = {
   shell: 'sh',

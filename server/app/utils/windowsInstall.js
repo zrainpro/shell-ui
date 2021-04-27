@@ -4,7 +4,7 @@ const path = require('path')
 
 module.exports = function (paths, command) {
   const p = paths.replace(/shell\.cmd$/g, '')
-  console.log(paths, p);
+  // console.log(paths, p);
   // return
   // window 需要创建三个文件, sh 文件, cmd 文件, ps1 文件
   const fileType = [{ type: '', template: 'sh' }, { type: '.cmd', template: 'cmd' }, { type: '.ps1', template: 'ps1' }]
