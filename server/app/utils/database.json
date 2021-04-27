@@ -1,7 +1,7 @@
 {
   "name": "shell-ui-database",
   "version": "0.0.1",
-  "description": "",
+  "description": "这是 shell-ui 创建的命令保存的仓库,使您在升级 shell-ui 版本的时候可以保留您之前设置的脚本命令",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -10,6 +10,8 @@
   "license": "ISC",
   "dependencies": {
     "commander": "^6.2.1",
-    "shelljs": "^0.8.4"
+    "shelljs": "^0.8.4",
+    "pacote": "^11.3.3",
+    "chalk": "^4.1.0"
   }
 }

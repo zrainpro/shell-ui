@@ -3,6 +3,7 @@ const shell = require('shelljs');
 const path = require('path');
 const fs = require('fs');
 const JSONDB = require('../../../utils/jsonDB');
+const windowInstall = require('./')
 
 const fileType = {
   shell: 'sh',
@@ -24,20 +25,21 @@ function reLoadPackage (command) {
     packageJson.write();
     packageJson.destroy();
     if (shell.which('shell')) {
-      const paths = shell.which('shell').stdout;
-      // 链接文件
-      const shellPath = paths.replace(/\/shell$/g, `/${command.command}`);
-      // 如果之前存在软链接, 需要删除软链接防止创建软链接失败
-      if (fs.existsSync(shellPath) && fs.lstatSync(shellPath).isSymbolicLink(shellPath)) {
-        shell.rm('-r', shellPath);
-      }
+      const paths = shell.which('shell').stdout.toLowerCase();
+      // 判断系统
       if (process.platform === 'win32') {
-        // 支持 window 系统
-        fs.symlinkSync(path.resolve(__dirname, `../../../../shell-ui-database/lib/userScript/${command.command}.js`), shellPath, 'junction');
+        windowInstall(paths, command)
       } else {
+        // 链接文件
+        const shellPath = paths.replace(/[\\\/]shell$/g, `/${command.command}`);
+        // 如果之前存在软链接, 需要删除软链接防止创建软链接失败
+        if (fs.existsSync(shellPath) && fs.lstatSync(shellPath).isSymbolicLink(shellPath)) {
+          shell.rm('-r', shellPath);
+        }
         fs.symlinkSync(path.resolve(__dirname, `../../../../shell-ui-database/lib/userScript/${command.command}.js`), shellPath);
+        shell.chmod('777', shellPath); // 程序可执行
       }
-      shell.chmod('777', shellPath); // 程序可执行
+
       resolve();
     } else {
       return

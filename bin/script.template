@@ -2,8 +2,20 @@
 const program = require('commander');
 const path = require('path');
 const shell = require('shelljs');
-const packageInfo = require('../../../shell-ui/package.json');
 const shellInfo = require('../../json/shell.json');
+const fs = require('fs');
+const path = require('path');
+
+let packageInfo = { version: '您还没有安装 shell-ui 呢, 快来执行 npm i -g shell-ui 来安装体验吧' };
+if (fs.existsSync('../../../shell-ui/package.json')) {
+  packageInfo = require('../../../shell-ui/package.json');
+}
+
+// 检查是否有更新
+let checkUpdate = null;
+if (fs.existsSync('../../../shell-ui/utils/checkUpdate.js')) {
+  checkUpdate = require('../../../shell-ui/utils/checkUpdate.js');
+}
 
 const command = shellInfo.shell[`'{{command}}'`];
 
@@ -27,48 +39,58 @@ if (!command.enable) {
   return
 }
 
-program
-  .version(packageInfo.version, '-v, --v, --version')
-
-// 如果有子命令, 注册子命令
-if (command.children && command.children.length) {
-  command.children.forEach(item => {
-    let temp = program;
-    // 不存在指令的数据为脏数据, 不处理
-    if (!item.command) return;
-    // 没有启用的指令, 不做处理
-    if (!item.enable) return;
-
-    temp = temp.command(item.command);
-    if (item.alias && item.alias !== item.command) {
-      temp = temp.alias(item.alias);
+(async function() {
+  if (checkUpdate) {
+    // 检查更新
+    const result = await checkUpdate();
+    if (result.hasUpdate) {
+      console.log(result.msg);
     }
-    if (item.description) {
-      temp = temp.description(item.description);
-    }
-    temp.action((cmd, args = []) => {
-      if (item.shell) {
-        runShell(item, args, path.resolve(__dirname, '../userShell/`{{command}}`/' + item.command + `.${fileType[item.type]}`)); // 执行 shell 脚本或者 js 脚本
-      } else {
-        console.log('亲~ 你是不是忘记设置脚本内容了, 手动吃瓜')
+  }
+
+  program
+    .version(packageInfo.version, '-v, --v, --version version')
+
+  // 如果有子命令, 注册子命令
+  if (command.children && command.children.length) {
+    command.children.forEach(item => {
+      let temp = program;
+      // 不存在指令的数据为脏数据, 不处理
+      if (!item.command) return;
+      // 没有启用的指令, 不做处理
+      if (!item.enable) return;
+
+      temp = temp.command(item.command);
+      if (item.alias && item.alias !== item.command) {
+        temp = temp.alias(item.alias);
       }
-    })
-  });
-}
+      if (item.description) {
+        temp = temp.description(item.description);
+      }
+      temp.action((cmd, args = []) => {
+        if (item.shell) {
+          runShell(item, args, path.resolve(__dirname, '../userShell/`{{command}}`/' + item.command + `.${fileType[item.type]}`)); // 执行 shell 脚本或者 js 脚本
+        } else {
+          console.log('亲~ 你是不是忘记设置脚本内容了, 手动吃瓜')
+        }
+      })
+    });
+  }
 
 // 注册主命令, 如果该命令存在 shell 脚本或者 javascript 脚本
-program.action(function(cmd, ...args) {
-  if (command.shell) {
-    runShell(command, args, path.resolve(__dirname, `../userShell/`{{command}}`.${fileType[command.type]}`)); // 执行 shell 脚本或者 js 脚本
-  } else {
-    console.log('亲~ 你是不是忘记设置脚本内容了, 手动吃瓜')
-  }
-})
-program.parse(process.argv);
+  program.action(function(cmd, ...args) {
+    if (command.shell) {
+      runShell(command, args, path.resolve(__dirname, `../userShell/`{{command}}`.${fileType[command.type]}`)); // 执行 shell 脚本或者 js 脚本
+    } else {
+      console.log('亲~ 你是不是忘记设置脚本内容了, 手动吃瓜')
+    }
+  })
+  program.parse(process.argv);
 
-if(!command.shell && (!program.args || !program.args.length)){
-  program.help()
-}
+  if(!command.shell && (!program.args || !program.args.length)){
+    program.help()
+  }
+})()
 
 // 执行 js 命令
 function runShell(item, args, shellPath) {
@@ -76,7 +98,7 @@ function runShell(item, args, shellPath) {
   if (item.type === 'shell') {
     shell
       .chmod('777', shellPath)
-      .exec(shellPath + ' ' + args.join(' ').replace(/,/g, ' '), null, function (code) {
+      .exec('sh ' + shellPath + ' ' + args.join(' ').replace(/,/g, ' '), null, function (code) {
         if (code !== 0) {
           shell.echo('程序执行出错');
           shell.exit(1);
