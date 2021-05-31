@@ -118,7 +118,7 @@ function runShell(item, args, shellPath) {
         params = className[0].replace(/^class/, '');
       } else {
         // 根本没有写 java 代码, 报出错误
-        console.log('小糊涂, 你是不是忘记写 java 代码了...');
+        console.log('额, 你是不是忘记写 java 代码了...');
         return
       }
     }

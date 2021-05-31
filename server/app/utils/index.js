@@ -342,6 +342,176 @@ async function editInstruct({ _this, params }) {
   }
   return { success: true, data: params };
 }
+// 删除指令
+async function removeInstruct({ _this, params }) {
+  const { json, shell } = _this;
+  const shellData = json.get('shell');
+  // 先获取到要删除的脚本, 先判断要删除的脚本是不是根指令
+  let command = null;
+  Object.keys(shellData).find(key => {
+    const item = shellData[key];
+    if (item.id === params.id) {
+      command = item;
+      return true;
+    }
+    for (let childItem of item.children) {
+      if (childItem.id === params.id) {
+        command = childItem;
+        return true;
+      }
+    }
+    return false
+  });
+  if (!command) {
+    return { error: `您要删除的指令 ${command.command} 不存在呢!` }
+  }
+  // 删除父脚本的要同时删除子脚本, 删除可执行指令, 删除 package.json 中的值
+  if (!command.parent) {
+    // 删除父脚本
+    await deletePackageShell(command);
+    // 删除父脚本数据
+    json.delete(`shell.${command.command}`);
+    json.write();
+  } else {
+    // 删除子脚本的要同时删除 shell 子脚本文件
+    if (command.type === 'shell') {
+      shell.rm('-f', path.resolve(__dirname, `../../../../shell-ui-database/lib/userShell/${command.parent}/${command.command}.sh`));
+    }
+    // 删除子脚本数据
+    const parent = shellData[command.parent];
+    if (parent) {
+      parent.children = parent.children.filter(item => item.id !== command.id);
+      json.write();
+    }
+  }
+  return { pass: true };
+}
+// 查询某个指令的数据
+async function getInstructFromName({ _this, params }) {
+  const { json, shell } = _this;
+  const shellData = json.get('shell');
+  let command = null;
+  let error = '';
+  // 如果是根元素, 直接获取即可
+  if (!params.parent || params.parent === 'root') {
+    if (shellData[params.command]) {
+      command = shellData[params.command];
+    } else {
+      error = `指令 ${params.command} 不存在!`;
+    }
+  } else {
+    // 不是根元素, 则需要根据父元素获取对应子元素
+    if (shellData[params.parent]) {
+      error = `指令 ${params.command} 不存在!`;
+      shellData[params.parent].find(item => {
+        if (item.command === params.command) {
+          command = item;
+          error = '';
+          return true;
+        }
+      });
+    } else {
+      error = `根指令 ${params.parent} 不存在!`;
+    }
+  }
+  return { error, command }
+}
+// 启用 | 禁用 某个指令
+async function enableInstruct({ _this, params }) {
+  const { json, shell, JSONDB } = _this;
+  // 首选找到脚本
+  const shellData = json.get('shell');
+  // 先获取到要删除的脚本, 先判断要删除的脚本是不是根指令
+  let command = null;
+  let error = '';
+  Object.keys(shellData).find(key => {
+    const item = shellData[key];
+    if (item.id === params.id) {
+      command = item;
+      return true;
+    }
+    for (let childItem of item.children) {
+      if (childItem.id === params.id) {
+        command = childItem;
+        return true;
+      }
+    }
+    return false
+  });
+  if (!command) {
+    return { error: `您要操作的指令 ${command.command} 不存在呢!` };
+  }
+  // 引入 package.json
+  const packageJson = new JSONDB({
+    path: path.resolve(__dirname, '../../../package.json')
+  });
+  // 如果是启用根脚本, 重新创建可执行脚本与子脚本
+  // 如果是禁用根脚本, 删除可执行脚本与子脚本
+  if (!command.parent) {
+    if (params.enable) {
+      if (shell.which(command.command)) {
+        return { error: `指令 ${command.command} 已经存在, 请换个名字在重试呢` }
+      }
+      await buildShell(command); // 创建可执行脚本
+      // 创建子脚本
+      if (command.children && command.children.length) {
+        command.children.forEach(item => {
+          if (item.type === 'shell') {
+            fs.writeFileSync(path.resolve(__dirname, `../../../../shell-ui-database/lib/userShell/${command.command}/${item.command}.sh`), item.shell)
+          }
+        });
+      }
+    } else {
+      // 删除 command 的指令并保存
+      packageJson.delete(`bin.${command.command}`).write();
+      packageJson.destroy();
+      // 删除指令数据
+      if (shell.which(command.command)) {
+        shell.rm('-f', shell.which(command.command).stdout);
+      }
+    }
+    // 修改数据
+    command.enable = !!params.enable;
+  } else {
+    command.enable = !!params.enable;
+  }
+  json.write();
+  return { pass: true };
+}
+// 导入指令
+async function importInstruct({ _this, json }) {
+  // 创建指令, 如果 id 存在,修改 ID 并进行创建(相当于合并操作), 如果指令存在, 修改指令,
+  const errors = []; // 记录数据错误, 创建失败等指令
+  // 获取目前已经存在的指令
+  let currentInstruct = require(path.resolve(__dirname, '../../../../shell-ui-database/json/shell.json'));
+  currentInstruct = currentInstruct.shell || {};
+  for (let item of json) {
+    let result = {};
+    if (currentInstruct[item.command] || currentInstruct[item.alias]) {
+      // 指令已经存在了, 修改指令 todo 这样直接修改会直接覆盖子指令,待修复
+      result = await editInstruct({ _this, params: item });
+    } else {
+      // 新创建指令
+      const params = item;
+      // 判断 ID 是否存在, ID 如果已经存在那么修改一下 ID 在进行创建
+      if (Object.keys(currentInstruct).find(key => currentInstruct[key].id === params.id)) {
+        params.id = _this.createUUID();
+      }
+      result = await createInstruct({ _this, params: item, useId: true });
+    }
+    // 如果出错展示记录错误信息
+    if (result.error) {
+      errors.push({
+        error: result.error,
+        command: item.command,
+        id: item.id,
+        instruct: item
+      });
+    }
+  }
+  const length = Object.keys('json').length;
+  return { success: length - errors.length, fail: errors.length, failData: errors };
+}
 // todo 如果是 nodeJS npm 包抽离出来并安装 npm 模块, 使支持 npm 模块
 async function installNpmModule({ params, json }) {
   const modules = getNodeModules(params.command); // 获取要引入的 npm 模块
@@ -360,5 +530,9 @@ module.exports = {
   buildShell,
   deletePackageShell,
   createInstruct,
-  editInstruct
+  editInstruct,
+  removeInstruct,
+  getInstructFromName,
+  enableInstruct,
+  importInstruct
 }

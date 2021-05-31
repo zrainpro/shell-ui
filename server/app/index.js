@@ -35,5 +35,7 @@ app.use(async function(ctx, next) {
   }
 });
 app.use(router.routes());
-runApp(3000, app);
-
+// runApp(3000, app);
+module.exports = (port = 3000) => {
+  runApp(port, app);
+}

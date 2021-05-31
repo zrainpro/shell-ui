@@ -67,6 +67,7 @@
 
 <script>
   import { reactive } from 'vue';
+  import supportType from '../../../../utils/supportType';
   import Label from '../../components/Label';
 
   export default {
@@ -90,13 +91,7 @@
       })
       let state = reactive({
         selected: [],
-        supportScript: [
-          { value: 'shell', label: 'shell' },
-          { value: 'javascript', label: 'js脚本' },
-          { value: 'python', label: 'Python' },
-          { value: 'java', label: 'java' },
-          { value: 'go', label: 'go' }
-        ]
+        supportScript: supportType
       });
       const rowSelection = {
         onChange: (selectedRowKeys, selectedRows) => {

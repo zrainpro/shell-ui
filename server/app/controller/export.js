@@ -83,41 +83,16 @@ class Export extends Base {
         resolve(json);
       })
     });
-    // 创建指令, 如果 id 存在,修改 ID 并进行创建(相当于合并操作), 如果指令存在, 修改指令,
-    const errors = []; // 记录数据错误, 创建失败等指令
-    // 获取目前已经存在的指令
-    let currentInstruct = require(path.resolve(__dirname, '../../../../shell-ui-database/json/shell.json'));
-    currentInstruct = currentInstruct.shell || {};
-    for (let item of json) {
-      let result = {};
-      if (currentInstruct[item.command] || currentInstruct[item.alias]) {
-        // 指令已经存在了, 修改指令 todo 这样直接修改会直接覆盖子指令,待修复
-        result = await utils.editInstruct({ _this: this, params: item });
-      } else {
-        // 新创建指令
-        const params = item;
-        // 判断 ID 是否存在, ID 如果已经存在那么修改一下 ID 在进行创建
-        if (Object.keys(currentInstruct).find(key => currentInstruct[key].id === params.id)) {
-          params.id = this.createUUID();
-        }
-        result = await utils.createInstruct({ _this: this, params: item, useId: true });
-      }
-      // 如果出错展示记录错误信息
-      if (result.error) {
-        errors.push({
-          error: result.error,
-          command: item.command,
-          id: item.id,
-          instruct: item
-        });
-      }
-    }
+
+    const result = await utils.importInstruct({ _this: this, json });
 
     // 返回相关信息, 并将导入失败的原因返回
     ctx.body = {
       code: 200,
       data: true,
-      errors
+      successNum: result.success,
+      failNum: result.fail,
+      errors: result.failData
     }
   }
 }

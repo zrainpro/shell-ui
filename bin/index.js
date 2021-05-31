@@ -3,7 +3,9 @@ const program = require('commander');
 const path = require('path');
 const shell = require('shelljs');
 const packageInfo = require('../package.json');
+const config = require('../lib/config');
 const checkUpdate = require('../utils/checkUpdate');
+const runApp = require('../server/app/index');
 
 (async function () {
   // 检查更新
@@ -14,16 +16,28 @@ const checkUpdate = require('../utils/checkUpdate');
 
   program
     .version(packageInfo.version, '-v, --v, --version, version')
+    .option('-p --port [type]', '指定运行端口')
+    .option('-h --helps', '帮助文档说明')
 
+  config.forEach(item => {
+    let temp = program;
+    Object.entries(item).forEach(([key, value]) => {
+      if (key === 'options') {
+        value.forEach(({ dir, desc }) => {
+          temp = temp.option(dir, desc);
+        });
+      } else {
+        temp = temp[key](value);
+      }
+    });
+  });
 
-  program.action(function(cmd, ...args) {
-    shell
-      .exec('node ' + path.resolve(__dirname, '../server/app/index.js'), null, function (code) {
-        if (code !== 0) {
-          shell.echo('程序执行出错, 请升级到最新版本呢!');
-          shell.exit(1);
-        }
-      })
-  })
+  program.action(function(options, cmd) {
+    if (options.helps) {
+      program.help();
+    } else {
+      runApp(options.port);
+    }
+  });
   program.parse(process.argv);
 })()
