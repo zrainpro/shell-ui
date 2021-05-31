@@ -36,7 +36,12 @@ const runApp = require('../server/app/index');
     if (options.helps) {
       program.help();
     } else {
-      runApp(options.port);
+      const [ command ] = cmd.args;
+      if (!command || command === 'start') {
+        runApp(options.port);
+      } else {
+        program.help();
+      }
     }
   });
   program.parse(process.argv);

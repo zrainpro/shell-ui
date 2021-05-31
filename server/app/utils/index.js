@@ -20,8 +20,8 @@ function reLoadPackage (command) {
     const packageJson = new JSONDB({
       path: path.resolve(__dirname, '../../../package.json')
     });
-    const name = packageJson.get('name');
     packageJson.get('bin')[command.command] = `../shell-ui-database/lib/userScript/${command.command}.js`;
+    command.alias && (packageJson.get('bin')[command.alias] = packageJson.get('bin')[command.command]);
     packageJson.write();
     packageJson.destroy();
     if (shell.which('shell')) {
@@ -31,13 +31,16 @@ function reLoadPackage (command) {
         windowInstall(paths, command)
       } else {
         // 链接文件
-        const shellPath = paths.replace(/[\\\/]shell$/g, `/${command.command}`);
-        // 如果之前存在软链接, 需要删除软链接防止创建软链接失败
-        if (fs.existsSync(shellPath) && fs.lstatSync(shellPath).isSymbolicLink(shellPath)) {
-          shell.rm('-r', shellPath);
-        }
-        fs.symlinkSync(path.resolve(__dirname, `../../../../shell-ui-database/lib/userScript/${command.command}.js`), shellPath);
-        shell.chmod('777', shellPath); // 程序可执行
+        [command.command, command.alias].forEach(cmd => {
+          if (!cmd) return
+          const tempPath = paths.replace(/[\\\/]shell$/g, `/${cmd}`);
+          // 如果之前存在软链接, 需要删除软链接防止创建软链接失败
+          if (fs.existsSync(tempPath) && fs.lstatSync(tempPath).isSymbolicLink(tempPath)) {
+            shell.rm('-r', tempPath);
+          }
+          fs.symlinkSync(path.resolve(__dirname, `../../../../shell-ui-database/lib/userScript/${command.command}.js`), tempPath);
+          shell.chmod('777', tempPath); // 程序可执行
+        });
       }
 
       resolve();
@@ -66,19 +69,26 @@ async function buildShell(command) {
   await reLoadPackage(command)
 }
 // 删除 package.json 中的指令
+function deletePackage(command) {
+  // 引入 package.json
+  const packageJson = new JSONDB({
+    path: path.resolve(__dirname, '../../../package.json')
+  });
+  // 删除 command 的指令并保存
+  packageJson.delete(`bin.${command.command}`)
+  command.alias && packageJson.delete(`bin.${command.alias}`);
+  packageJson.write().destroy();
+  [command.command, command.alias].forEach(cmd => {
+    if (!cmd) return;
+    // 删除指令数据
+    if (shell.which(cmd)) {
+      shell.rm('-f', shell.which(cmd).stdout);
+    }
+  });
+}
 function deletePackageShell(command) {
   return new Promise(resolve => {
-    // 引入 package.json
-    const packageJson = new JSONDB({
-      path: path.resolve(__dirname, '../../../package.json')
-    });
-    // 删除 command 的指令并保存
-    packageJson.delete(`bin.${command.command}`).write();
-    packageJson.destroy();
-    // 删除指令数据
-    if (shell.which(command.command)) {
-      shell.rm('-f', shell.which(command.command).stdout);
-    }
+    deletePackage(command);
     // 删除创建的 js 文件
     shell.rm('-f', path.resolve(__dirname, `../../../../shell-ui-database/lib/userScript/${command.command}.js`));
     // 如果之前是 shell 类型的, 应该删除掉对应创建的 shell 脚本
@@ -139,6 +149,10 @@ async function createInstruct({ _this, params, useId }) {
       json.get('shell')[data.parent] = parent;
       await buildShell(parent); // 创建父级 js 脚本 与 shell 脚本与子脚本存放目录, 更新 package 文件重新 npm link
     }
+    // 进行子指令去重
+    if (parent.children.find(_ => _.command === data.command)) {
+      return { error: `子指令 ${data.command} 已经存在!` };
+    }
     parent.children.push({
       command: data.command || '',
       alias: data.alias || '',
@@ -155,6 +169,7 @@ async function createInstruct({ _this, params, useId }) {
     }
     // 设置完数据保存到文件
     json.write();
+    return { pass: true };
   } else {
     const shellInfo = {
       command: data.command || '',
@@ -170,10 +185,13 @@ async function createInstruct({ _this, params, useId }) {
     if (shell.which(shellInfo.command)) {
       return { error: `指令 ${shellInfo.command} 已经存在!` };
     }
+    if (shellInfo.alias && shell.which(shellInfo.alias)) {
+      return { error: `指令简写 ${shellInfo.alias} 已经存在!` };
+    }
     json.get('shell')[shellInfo.command] = shellInfo;
     json.write();
     await buildShell(shellInfo); // 创建父级 js 脚本 与 shell 脚本与子脚本存放目录, 更新 package 文件重新 npm link
-    return { uuid };
+    return { uuid, pass: true };
   }
 }
 // 修改指令
@@ -207,6 +225,9 @@ async function editInstruct({ _this, params }) {
       // 先判断指令是否存在
       if (shell.which(data.command)) {
         return { error: `您不能将当前子指令更改为根指令哦, 因为 ${data.command} 已经存在了哦!` };
+      }
+      if (data.alias && shell.which(data.alias)) {
+        return { error: `指令简写 ${data.alias} 已经存在!` };
       }
       // 创建新的根指令的数据
       json.set(`shell.${data.command}`, {
@@ -250,12 +271,23 @@ async function editInstruct({ _this, params }) {
         json.set(`shell.${data.command}`, oldCommand);
         // 创建了新的指令, 那么需要更新 shell 脚本
         await buildShell(data);
-        // 创建子脚本
+        // 创建子脚本 并 同步子脚本 parent 字段
         oldCommand.children.forEach(item => {
+          item.parent = data.command;
           if (item.type !== 'javascript' && fileType[item.type]) {
             fs.writeFileSync(path.resolve(__dirname, `../../../../shell-ui-database/lib/userShell/${data.command}/${item.command}.${fileType[item.type]}`), item.shell)
           }
         });
+      }
+      // 如果修改了指令简写, 那么要删除之前旧的指令简写, 并且创建新的指令简写
+      if (oldCommand.alias !== data.alias) {
+        // 判断新的指令简写是否存在
+        if (data.alias && shell.which(data.alias)) {
+          return { error: `指令简写 ${data.alias} 已经存在!` };
+        }
+        // 删除旧的指令软链数据, 写入新的软链
+        deletePackage(oldCommand);
+        await reLoadPackage(data);
       }
       // 更新指令数据
       json.set(`shell.${data.command}`, {
@@ -403,7 +435,7 @@ async function getInstructFromName({ _this, params }) {
     // 不是根元素, 则需要根据父元素获取对应子元素
     if (shellData[params.parent]) {
       error = `指令 ${params.command} 不存在!`;
-      shellData[params.parent].find(item => {
+      shellData[params.parent].children.find(item => {
         if (item.command === params.command) {
           command = item;
           error = '';
@@ -439,7 +471,7 @@ async function enableInstruct({ _this, params }) {
     return false
   });
   if (!command) {
-    return { error: `您要操作的指令 ${command.command} 不存在呢!` };
+    return { error: `您要操作的指令 ${params.command} 不存在呢!` };
   }
   // 引入 package.json
   const packageJson = new JSONDB({

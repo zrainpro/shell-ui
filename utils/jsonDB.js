@@ -56,7 +56,8 @@ class JSONDB {
    * 写入数据到 json 文件
    */
   write() {
-    fs.writeFileSync(this.jsonPath, JSON.stringify(state[this.jsonPath], null, 2))
+    fs.writeFileSync(this.jsonPath, JSON.stringify(state[this.jsonPath], null, 2));
+    return this;
   }
 
   /**

@@ -9,7 +9,7 @@
   "author": "雨鱼",
   "license": "ISC",
   "dependencies": {
-    "commander": "^6.2.1",
+    "commander": "^7.2.0",
     "shelljs": "^0.8.4",
     "pacote": "^11.3.3",
     "chalk": "^4.1.0"

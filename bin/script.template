@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 const program = require('commander');
+const chalk = require('chalk');
 const fs = require('fs');
 const path = require('path');
 const shell = require('shelljs');
@@ -47,9 +48,6 @@ if (!command.enable) {
     }
   }
 
-  program
-    .version(packageInfo.version, '-v, --v, --version version')
-
   // 如果有子命令, 注册子命令
   if (command.children && command.children.length) {
     command.children.forEach(item => {
@@ -57,6 +55,7 @@ if (!command.enable) {
       // 不存在指令的数据为脏数据, 不处理
       if (!item.command) return;
       // 没有启用的指令, 不做处理
+      console.log(item.enable);
       if (!item.enable) return;
 
       temp = temp.command(item.command);
@@ -66,9 +65,9 @@ if (!command.enable) {
       if (item.description) {
         temp = temp.description(item.description);
       }
-      temp.action((cmd, args = []) => {
+      temp.action((options, cmd) => {
         if (item.shell) {
-          runShell(item, args, path.resolve(__dirname, '../userShell/`{{command}}`/' + item.command + `.${fileType[item.type]}`)); // 执行 shell 脚本或者 js 脚本
+          runShell(item, cmd.args, path.resolve(__dirname, '../userShell/`{{command}}`/' + item.command + `.${fileType[item.type]}`)); // 执行 shell 脚本或者 js 脚本
         } else {
           console.log('亲~ 你是不是忘记设置脚本内容了, 手动吃瓜')
         }
@@ -77,9 +76,12 @@ if (!command.enable) {
   }
 
 // 注册主命令, 如果该命令存在 shell 脚本或者 javascript 脚本
-  program.action(function(cmd, ...args) {
+  program.action(function(options, cmd) {
     if (command.shell) {
-      runShell(command, args, path.resolve(__dirname, `../userShell/`{{command}}`.${fileType[command.type]}`)); // 执行 shell 脚本或者 js 脚本
+      if (cmd.args.length) {
+        console.log(chalk.yellow(`参数 ${cmd.args.join(' ')} 未匹配到应用, 即将为您执行根指令!`))
+      }
+      runShell(command, cmd.args, path.resolve(__dirname, `../userShell/`{{command}}`.${fileType[command.type]}`)); // 执行 shell 脚本或者 js 脚本
     } else {
       console.log('亲~ 你是不是忘记设置脚本内容了, 手动吃瓜')
     }

@@ -5,10 +5,11 @@ const koaBody = require('koa-body');
 const send = require('koa-send');
 const fs = require('fs');
 const path = require('path');
-require('./createDir');
+const initShellUI = require('./init');
 const router = require('./router');
 const runApp = require('./utils/run');
 
+initShellUI();
 const app = new Koa();
 // app.use(bodyParser());
 app.use(koaBody({ multipart: true }))
