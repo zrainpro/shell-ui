@@ -80,14 +80,8 @@ shell export /home # 导出指令数据到 /home 目录, 不指定路径默认�
 shell clear
 ```
 
-### 初始化
-> 一般情况下第一次执行可交互界面的命令是会自动执行初始化, 不需要用户手动执行初始化
-```shell script
-shell init
-```
-
 ### 发布记录
-release 0.1.5
+release 0.1.6
 - 支持自定义端口启动 -p
 - 支持命令行操作
 - 升级依赖

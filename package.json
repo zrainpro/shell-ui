@@ -1,10 +1,10 @@
 {
   "name": "shell-ui",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "a visualization shell manage tools",
   "main": "index.js",
   "scripts": {
-    "serve": "node server/app/index.js",
+    "serve": "node server/app/startServer.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "bin": {

@@ -3,8 +3,9 @@ const program = require('commander');
 const path = require('path');
 const shell = require('shelljs');
 const packageInfo = require('../package.json');
-const config = require('../lib/config');
+require('../server/app/init');
 const checkUpdate = require('../utils/checkUpdate');
+const config = require('../lib/config');
 const runApp = require('../server/app/index');
 
 (async function () {
