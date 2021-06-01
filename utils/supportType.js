@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 const support = [
   { value: 'shell', label: 'shell' },
   { value: 'javascript', label: 'js脚本' },

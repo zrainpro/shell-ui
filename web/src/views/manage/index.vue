@@ -45,6 +45,7 @@
       <a-table :columns="table.columns"
                :data-source="table.data"
                row-key="id"
+               :indentSize="5"
                :row-selection="rowSelection">
         <template #enable="{ record }">
           <!-- 自身脚本禁止禁用 -->
@@ -67,7 +68,7 @@
 
 <script>
   import { reactive } from 'vue';
-  import supportType from '../../../../utils/supportType';
+  // import supportType from '../../../../utils/supportType';
   import Label from '../../components/Label';
 
   export default {
@@ -79,19 +80,25 @@
       // 表格展示的信息
       const table = reactive({
         columns: [
-          { title: 'command', dataIndex: 'command', key: 'command', width: 120 },
+          { title: 'command', dataIndex: 'command', key: 'command', width: 140, fixed: 'left', align: 'left', ellipsis: true },
           { title: '简写', dataIndex: 'alias', key: 'alias', width: 80 },
           { title: '脚本类型', dataIndex: 'type', key: 'type', width: 80 },
           { title: '是否启用', dataIndex: 'enable', key: 'enable', width: 100, slots: { customRender: 'enable' } },
           { title: '简介', dataIndex: 'description', key: 'description', width: 120, ellipsis: true },
           { title: '脚本', dataIndex: 'shell', key: 'shell', width: 240, ellipsis: true },
-          { title: '操作', dataIndex: 'id', key: 'id', width: 130, slots: { customRender: 'operation' } }
+          { title: '操作', dataIndex: 'id', key: 'id', width: 130, fixed: 'right', slots: { customRender: 'operation' } }
         ],
         data: []
       })
       let state = reactive({
         selected: [],
-        supportScript: supportType
+        supportScript: [
+          { value: 'shell', label: 'shell' },
+          { value: 'javascript', label: 'js脚本' },
+          { value: 'python', label: 'Python' },
+          { value: 'java', label: 'java' },
+          { value: 'go', label: 'go' }
+        ]
       });
       const rowSelection = {
         onChange: (selectedRowKeys, selectedRows) => {
@@ -253,6 +260,17 @@
         > * + * {
           margin-left: 10px;
         }
+      }
+    }
+    .table {
+      width: 100%;
+      min-width: 600px;
+      overflow-x: auto;
+      /deep/ .ant-table-body {
+        overflow: auto;
+      }
+      /deep/ .ant-btn-link {
+        padding: 0 5px;
       }
     }
   }

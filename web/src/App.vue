@@ -1,14 +1,24 @@
 <template>
-  <div id="app">
-    <div class="menu">
+  <div id="app" :style="`min-width: ${state.collapsed ? '744px' : '884px'}`">
+    <div class="menu" :style="`width: ${state.collapsed ? '80px' : '220px'}`">
+      <div class="nav-item" @click.stop="state.collapsed = !state.collapsed">
+        <a-tooltip placement="right">
+          <UnorderedListOutlined />
+        </a-tooltip>
+      </div>
       <a-menu
           v-model:selectedKeys="menu.selectedKeys"
           mode="inline"
           theme="light"
-          :inline-collapsed="false"
+          :inline-collapsed="state.collapsed"
       >
         <a-menu-item @click="clickMenu(item)" :key="item.path" v-for="item in menu.list">
-          <router-link :to="item.path">{{item.name}}</router-link>
+          <router-link :to="item.path">
+            <span>
+              <component :is="item.icon"></component>
+              <span>{{item.name}}</span>
+            </span>
+          </router-link>
         </a-menu-item>
       </a-menu>
     </div>
@@ -23,17 +33,24 @@
 </template>
 <script>
   import { reactive, onMounted } from 'vue';
+  import { BlockOutlined, CodeOutlined, SettingOutlined, UnorderedListOutlined } from '@ant-design/icons-vue';
 
   export default {
+    components: {
+      BlockOutlined,
+      CodeOutlined,
+      SettingOutlined,
+      UnorderedListOutlined
+    },
     setup() {
       // 声明菜单数据
       const menu = reactive({
         selectedKeys: ['/'],
         active: { name: '脚本管理', path: '/' },
         list: [
-          { name: '脚本管理', path: '/manage' },
-          // { name: 'shell', path: '/shell' },
-          // { name: '设置', path: '/setting' }
+          { name: '脚本管理', path: '/manage', icon: BlockOutlined },
+          // { name: 'shell', path: '/shell', icon: CodeOutlined },
+          // { name: '设置', path: '/setting', icon: SettingOutlined }
         ]
       });
       // mounted 的时候修改 菜单项
@@ -42,8 +59,13 @@
         menu.selectedKeys = [menu.active.path];
       });
 
+      const state = reactive({
+        collapsed: true
+      });
+
       return {
-        menu
+        menu,
+        state
       }
     },
     methods: {
@@ -54,7 +76,7 @@
     }
   }
 </script>
-<style>
+<style lang="less">
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -76,6 +98,15 @@
   display: flex;
   flex-direction: column;
   background: rgb(255, 255, 255);
+  .nav-item {
+    width: 100%;
+    height: 40px;
+    line-height: 40px;
+    text-align: center;
+    &:hover {
+      color: #1da57a;
+    }
+  }
 }
 .content {
   flex: 1;
