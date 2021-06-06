@@ -8,7 +8,12 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "bin": {
-    "shell": "./bin/index.js"
+    "shell": "./bin/index.js",
+    "gn": "../shell-ui-database/lib/userScript/gn.js",
+    "wa": "../shell-ui-database/lib/userScript/wa.js",
+    "ad": "../shell-ui-database/lib/userScript/ad.js",
+    "back": "../shell-ui-database/lib/userScript/back.js",
+    "for": "../shell-ui-database/lib/userScript/for.js"
   },
   "author": "雨鱼",
   "license": "ISC",

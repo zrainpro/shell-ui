@@ -19,6 +19,12 @@ shell ls -a # 罗列所用的根指令
 shell ls xxx # 罗列根指令 xxx 下的启用的子指令
 shell ls xxx -a # 罗列根指令 xxx 下所有的子指令
 ```
+### shell get 获取指令的脚本内容
+> shell get <指令名> -f <父指令名>
+```shell script
+shell get xxx # 获取根指令 xxx 的脚本内容
+shell get xxx -f parent # 获取根指令 parent 下 xxx 指令的脚本内容
+```
 ### shell add 添加指令 
 > shell add <指令名> -f <父指令名> -i <指令简写> -d <指令描述> -t <指令类型, 不支持的话默认shell> <指令内容>
 ```shell script
@@ -81,6 +87,12 @@ shell clear
 ```
 
 ### 发布记录
+release 0.1.7
+- 添加对数据的实时监听,保证起多个实例时能够相互同步指令数据
+- 修复导入只能导入根指令,子指令不能正常导入
+- 命令行支持 get 获取某个指令的内容
+- 修复可视化界面删除启用指令报错
+
 release 0.1.6
 - 支持自定义端口启动 -p
 - 支持命令行操作

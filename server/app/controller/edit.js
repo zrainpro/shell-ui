@@ -43,7 +43,7 @@ class Edit extends Base {
     }
     ctx.body = {
       code: 200,
-      data: command,
+      data: result.command,
       message: '删除成功'
     }
   }
@@ -57,7 +57,7 @@ class Edit extends Base {
     ctx.body = {
       code: 200,
       data: true,
-      message: command.enable ? '启用成功' : '禁用成功'
+      message: result.command.enable ? '启用成功' : '禁用成功'
     }
   }
 }

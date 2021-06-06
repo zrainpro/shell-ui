@@ -1,7 +1,8 @@
 const fs = require('fs');
 const lodash = require('lodash');
 
-const state = {}
+const state = {};
+const watcher = {};
 
 class JSONDB {
   constructor(props = { path }) {
@@ -16,9 +17,28 @@ class JSONDB {
     if (!fs.existsSync(this.jsonPath)) {
       fs.writeFileSync(this.jsonPath, '{}')
     }
-    if (!state[this.jsonPath]) {
-      state[this.jsonPath] = require(this.jsonPath);
+    // 监听文件变动, 获取文件最新信息并导入
+    this.watchFile(this.jsonPath, true, (result) => {
+      state[this.jsonPath] = result;
+    });
+  }
+
+  watchFile(path, immediate, callback) {
+    if (!watcher[path]) {
+      watcher[path] = { callbacks: [callback] };
+      fs.watch(path, { persistent: false }, (event) => {
+        // console.log(`监听到 ${path} 发生了变化`);
+        if (!watcher[path]) return;
+        // 删除 require 的缓存, 保证拿到最新的数据
+        delete require.cache[path];
+        const tempState = require(path);
+        watcher[path].callbacks.forEach(func => func(tempState));
+      });
+    } else {
+      watcher[path].callbacks.push(callback);
     }
+    // require 已经做了缓存不需要再做缓存
+    immediate && callback(require(path));
   }
 
   /**
@@ -65,6 +85,7 @@ class JSONDB {
    */
   destroy() {
     delete state[this.jsonPath];
+    delete watcher[this.jsonPath];
   }
 }
 

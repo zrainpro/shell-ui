@@ -55,7 +55,6 @@ if (!command.enable) {
       // 不存在指令的数据为脏数据, 不处理
       if (!item.command) return;
       // 没有启用的指令, 不做处理
-      console.log(item.enable);
       if (!item.enable) return;
 
       temp = temp.command(item.command);

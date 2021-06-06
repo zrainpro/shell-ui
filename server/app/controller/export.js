@@ -83,16 +83,14 @@ class Export extends Base {
         resolve(json);
       })
     });
-
-    const result = await utils.importInstruct({ _this: this, json });
+    // todo 前端应该允许设置导入选项, 配置当遇到重复指令与 alias 重复的时候的应该如何处理, 支持 add 添加 merge 合并 ignore 忽略, 目前默认新增
+    const result = await utils.importInstruct({ _this: this, json, onRepeat: 'add', onAliasRepeat: 'add' });
 
     // 返回相关信息, 并将导入失败的原因返回
     ctx.body = {
       code: 200,
       data: true,
-      successNum: result.success,
-      failNum: result.fail,
-      errors: result.failData
+      ...result
     }
   }
 }
