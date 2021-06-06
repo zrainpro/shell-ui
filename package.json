@@ -1,6 +1,6 @@
 {
   "name": "shell-ui",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "a visualization shell manage tools",
   "main": "index.js",
   "scripts": {
@@ -8,12 +8,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "bin": {
-    "shell": "./bin/index.js",
-    "gn": "../shell-ui-database/lib/userScript/gn.js",
-    "wa": "../shell-ui-database/lib/userScript/wa.js",
-    "ad": "../shell-ui-database/lib/userScript/ad.js",
-    "back": "../shell-ui-database/lib/userScript/back.js",
-    "for": "../shell-ui-database/lib/userScript/for.js"
+    "shell": "./bin/index.js"
   },
   "author": "雨鱼",
   "license": "ISC",
