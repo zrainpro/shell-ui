@@ -7,14 +7,14 @@ const shell = require('shelljs');
 const shellInfo = require('../../json/shell.json');
 
 let packageInfo = { version: '您还没有安装 shell-ui 呢, 快来执行 npm i -g shell-ui 来安装体验吧' };
-if (fs.existsSync('../../../shell-ui/package.json')) {
-  packageInfo = require('../../../shell-ui/package.json');
+if (fs.existsSync(path.resolve(__dirname, '../../../shell-ui/package.json'))) {
+  packageInfo = require(path.resolve(__dirname, '../../../shell-ui/package.json'));
 }
 
 // 检查是否有更新
 let checkUpdate = null;
-if (fs.existsSync('../../../shell-ui/utils/checkUpdate.js')) {
-  checkUpdate = require('../../../shell-ui/utils/checkUpdate.js');
+if (fs.existsSync(path.resolve(__dirname, '../../../shell-ui/utils/checkUpdate.js'))) {
+  checkUpdate = require(path.resolve(__dirname, '../../../shell-ui/utils/checkUpdate.js'));
 }
 
 const command = shellInfo.shell[`'{{command}}'`];
@@ -40,6 +40,32 @@ if (!command.enable) {
 }
 
 (async function() {
+  // 检查是否已经安装了依赖
+  if (!fs.existsSync('../../init.json')) {
+    fs.writeFileSync('../../init.json', '{"init":false}');
+  }
+  const markInit = require('../../init.json');
+  if (!markInit.init || !fs.existsSync(path.resolve(__dirname, '../../node_modules'))) {
+    console.log(chalk.red('系统检测到您还没有安装依赖, 即将为您安装依赖'));
+    const result = await (function () {
+      return new Promise(resolve => {
+        shell.cd('../../');
+        shell.exec('npm i --registry=https://registry.npm.taobao.org', null, function (code) {
+          if (code !== 0) {
+            // 失败了
+            console.log(chalk.red('依赖安装失败, 请检查网络后重试,或手动运行如下命令手动安装依赖: '));
+            console.log(chalk.red(`cd ${path.resolve(__dirname, '../../')} && npm i --registry=https://registry.npm.taobao.org`));
+            resolve(1);
+          } else {
+            console.log(chalk.green('依赖安装成功~'));
+            resolve(0)
+          }
+        })
+      });
+    })();
+    if (result !== 0) { return }
+  }
+
   if (checkUpdate) {
     // 检查更新
     const result = await checkUpdate();

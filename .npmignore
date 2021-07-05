@@ -1,0 +1,8 @@
+/web
+node_modules
+status.json
+update.json
+shell-ui_database.json
+.gitignore
+.npmignore
+.idea

@@ -3,17 +3,22 @@ const program = require('commander');
 const path = require('path');
 const shell = require('shelljs');
 const packageInfo = require('../package.json');
-require('../server/app/init');
+const init = require('../server/app/init');
 const checkUpdate = require('../utils/checkUpdate');
 const config = require('../lib/config');
-const runApp = require('../server/app/index');
 
 (async function () {
+  // 判断是否初始化完毕  clear 命令不需要判断, 其他命令都需要先初始化才行
+  if (!process.argv.includes('clear')) {
+    await init();
+  }
   // 检查更新
   const result = await checkUpdate();
   if (result.hasUpdate) {
     console.log(result.msg);
   }
+
+  const runApp = require('../server/app/index');
 
   program
     .version(packageInfo.version, '-v, --v, --version, version')

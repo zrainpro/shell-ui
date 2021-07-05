@@ -5,11 +5,12 @@ const koaBody = require('koa-body');
 const send = require('koa-send');
 const fs = require('fs');
 const path = require('path');
-require('./init');
+const init = require('./init');
 const router = require('./router');
 const runApp = require('./utils/run');
 
-module.exports = (port = 3000) => {
+module.exports = async (port = 3000) => {
+  await init();
   const app = new Koa();
 // app.use(bodyParser());
   app.use(koaBody({ multipart: true }))
