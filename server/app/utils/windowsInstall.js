@@ -12,7 +12,7 @@ module.exports = function (paths, command) {
     // 读取模板文件
     let shTemplate = fs.readFileSync(path.resolve(__dirname, `./template/${item.template}.template`)).toString();
 
-    [command.command, command.alias].forEach(cmd => {
+    Array.from(new Set([command.command, command.alias])).forEach(cmd => {
       if (!cmd) return
       const tempPath = p + cmd + item.type;
       // 替换字符串模板

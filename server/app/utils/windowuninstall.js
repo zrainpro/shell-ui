@@ -5,7 +5,7 @@ module.exports = function (command) {
   // window 需要删除三个文件, sh 文件, cmd 文件, ps1 文件
   const fileType = [{ type: '', template: 'sh' }, { type: '.cmd', template: 'cmd' }, { type: '.ps1', template: 'ps1' }];
 
-  [command.command, command.alias].forEach(cmd => {
+  Array.from(new Set([command.command, command.alias])).forEach(cmd => {
     if (!cmd) return
     const path = shell.which(cmd).stdout
     fileType.forEach(item => {

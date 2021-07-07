@@ -33,7 +33,7 @@ function reLoadPackage (command) {
         windowInstall(paths, command)
       } else {
         // 链接文件
-        [command.command, command.alias].forEach(cmd => {
+        Array.from(new Set([command.command, command.alias])).forEach(cmd => {
           if (!cmd) return
           const tempPath = paths.replace(/[\\\/]shell$/g, `/${cmd}`);
           // 如果之前存在软链接, 需要删除软链接防止创建软链接失败
@@ -84,7 +84,7 @@ function deletePackage(command) {
   if (process.platform === 'win32') {
     windowUnInstall(command);
   } else {
-    [command.command, command.alias].forEach(cmd => {
+    Array.from(new Set([command.command, command.alias])).forEach(cmd => {
       if (!cmd) return;
       // 删除指令数据
       if (shell.which(cmd)) {
@@ -192,7 +192,7 @@ async function createInstruct({ _this, params, useId }) {
     if (shell.which(shellInfo.command)) {
       return { error: `指令 ${shellInfo.command} 已经存在!` };
     }
-    if (shellInfo.alias && shell.which(shellInfo.alias)) {
+    if (shellInfo.alias !== shellInfo.command && shellInfo.alias && shell.which(shellInfo.alias)) {
       return { error: `指令简写 ${shellInfo.alias} 已经存在!` };
     }
     json.get('shell')[shellInfo.command] = shellInfo;
@@ -233,7 +233,7 @@ async function editInstruct({ _this, params }) {
       if (shell.which(data.command)) {
         return { error: `您不能将当前子指令更改为根指令哦, 因为 ${data.command} 已经存在了哦!` };
       }
-      if (data.alias && shell.which(data.alias)) {
+      if (data.alias !== data.command && data.alias && shell.which(data.alias)) {
         return { error: `指令简写 ${data.alias} 已经存在!` };
       }
       // 创建新的根指令的数据
@@ -289,7 +289,7 @@ async function editInstruct({ _this, params }) {
       // 如果修改了指令简写, 那么要删除之前旧的指令简写, 并且创建新的指令简写
       if (oldCommand.alias !== data.alias) {
         // 判断新的指令简写是否存在
-        if (data.alias && shell.which(data.alias)) {
+        if (data.alias !== data.command && data.alias && shell.which(data.alias)) {
           return { error: `指令简写 ${data.alias} 已经存在!` };
         }
         // 删除旧的指令软链数据, 写入新的软链

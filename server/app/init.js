@@ -78,6 +78,7 @@ module.exports = function () {
         if (!markInit.get('init', false)) {
           markInit.set('init', true);
         }
+        markInit.write().destroy();
         markInit.destroy();
         resolve(code);
       });

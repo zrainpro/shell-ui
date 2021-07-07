@@ -34,7 +34,6 @@ module.exports = {
   },
 
   outputDir: '../server/web',
-
   // 网页标题
   chainWebpack: (config) => {
     config
@@ -43,7 +42,5 @@ module.exports = {
         args[0].title = 'shellUI';
         return args;
       });
-  },
-
-  productionSourceMap: false
+  }
 }

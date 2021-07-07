@@ -4,7 +4,7 @@ const chalk = require('chalk');
 const fs = require('fs');
 const path = require('path');
 const shell = require('shelljs');
-const shellInfo = require('../../json/shell.json');
+const shellInfo = require(path.resolve(__dirname, '../../json/shell.json'));
 
 let packageInfo = { version: '您还没有安装 shell-ui 呢, 快来执行 npm i -g shell-ui 来安装体验吧' };
 if (fs.existsSync(path.resolve(__dirname, '../../../shell-ui/package.json'))) {
@@ -41,10 +41,10 @@ if (!command.enable) {
 
 (async function() {
   // 检查是否已经安装了依赖
-  if (!fs.existsSync('../../init.json')) {
-    fs.writeFileSync('../../init.json', '{"init":false}');
+  if (!fs.existsSync(path.resolve(__dirname, '../../init.json'))) {
+    fs.writeFileSync(path.resolve(__dirname, '../../init.json'), '{"init":false}');
   }
-  const markInit = require('../../init.json');
+  const markInit = require(path.resolve(__dirname, '../../init.json'));
   if (!markInit.init || !fs.existsSync(path.resolve(__dirname, '../../node_modules'))) {
     console.log(chalk.red('系统检测到您还没有安装依赖, 即将为您安装依赖'));
     const result = await (function () {
