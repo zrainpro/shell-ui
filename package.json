@@ -1,6 +1,6 @@
 {
   "name": "shell-ui",
-  "version": "0.1.12",
+  "version": "0.1.13-BETA-1",
   "description": "a visualization shell manage tools",
   "main": "index.js",
   "scripts": {

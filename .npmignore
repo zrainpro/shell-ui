@@ -6,3 +6,5 @@ shell-ui_database.json
 .gitignore
 .npmignore
 .idea
+RELEASE.MD
+TODO.MD
