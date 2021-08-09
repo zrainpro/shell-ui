@@ -68,7 +68,7 @@
 
 <script>
   import { reactive } from 'vue';
-  // import supportType from '../../../../utils/supportType';
+  import supportType from '../../../utils/supportType';
   import Label from '../../components/Label';
 
   export default {
@@ -92,7 +92,7 @@
       })
       let state = reactive({
         selected: [],
-        supportScript: [
+        supportScript: supportType || [
           { value: 'shell', label: 'shell' },
           { value: 'javascript', label: 'js脚本' },
           { value: 'python', label: 'Python' },
@@ -266,10 +266,10 @@
       width: 100%;
       min-width: 600px;
       overflow-x: auto;
-      /deep/ .ant-table-body {
+      ::v-deep(.ant-table-body) {
         overflow: auto;
       }
-      /deep/ .ant-btn-link {
+      ::v-deep(.ant-btn-link) {
         padding: 0 5px;
       }
     }

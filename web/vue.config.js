@@ -28,9 +28,43 @@ module.exports = {
   },
 
   configureWebpack: {
+    output: {
+      filename: '[name].bundle.js'
+    },
+    optimization: {
+      splitChunks: {
+        chunks: 'all'
+      }
+    },
     plugins: [
-      new MonacoWebpackPlugin()
+      new MonacoWebpackPlugin({
+        languages: ['javascript', 'python', 'java', 'go', 'shell']
+      })
     ]
+  },
+
+  // gzip 与 br 压缩
+  pluginOptions: {
+    compression:{
+      // brotli: {
+      //   filename: '[file].br[query]',
+      //   algorithm: 'brotliCompress',
+      //   include: /\.(js|css|html|svg|json)(\?.*)?$/i,
+      //   compressionOptions: {
+      //     params: {
+      //       [zlib.constants.BROTLI_PARAM_QUALITY]: 11,
+      //     },
+      //   },
+      //   minRatio: 0.8
+      // },
+      gzip: {
+        filename: '[file].gz[query]',
+        algorithm: 'gzip',
+        include: /\.(js|css|html|svg|json)(\?.*)?$/i,
+        minRatio: 0.8,
+        deleteOriginalAssets: true
+      }
+    }
   },
 
   outputDir: '../server/web',

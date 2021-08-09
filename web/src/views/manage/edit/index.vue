@@ -61,6 +61,7 @@
   import { reactive } from 'vue';
   import Monaco from '../../../components/Monaco';
   import Label from '../../../components/Label';
+  import supportType from '../../../../utils/supportType';
 
   export default {
     name: "index",
@@ -71,13 +72,7 @@
     setup() {
       const state = reactive({
         shells: [],
-        shellType: [
-          'shell',
-          'javascript',
-          'python',
-          'java',
-          'go'
-        ],
+        shellType: supportType.map(_ => _.value),
         form: {
           command: '',
           alias: '',

@@ -93,10 +93,9 @@ shell init
 shell clear
 ```
 
-todo
-- 
-
 ### 发布记录
 release 0.1.13
 - 修复升级后初次运行指令安装更新依赖失败
+- 支持 zx 使用 js 来写脚本
+- js 脚本支持引入依赖
 

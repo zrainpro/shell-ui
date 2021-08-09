@@ -21,17 +21,19 @@ const command = shellInfo.shell[`'{{command}}'`];
 
 const fileType = {
   shell: 'sh',
-  javascript: 'js', // 不需要
+  javascript: 'js',
   java: 'java',
   python: 'py',
-  go: 'go'
+  go: 'go',
+  zx: 'js'
 }
 const runStr = {
   shell: '', // 不需要
   javascript: '', // 不需要
   java: '', // 执行起来比较特殊需要编译, 特殊处理
   python: 'python',
-  go: 'go run'
+  go: 'go run',
+  zx: 'zx'
 }
 
 if (!command.enable) {
@@ -133,8 +135,9 @@ function runShell(item, args, shellPath) {
       });
   } else if (item.type === 'javascript') {
     // 如果脚本类型是 javascript 类型的
-    const selfFunction = new Function(item.shell.replace(/\\n/g, ''));
-    selfFunction.call(null);
+    // const selfFunction = new Function(item.shell.replace(/\\n/g, ''));
+    // selfFunction.call(null);
+    require(shellPath);
   } else if (item.type === 'java') {
     // todo 考虑复用编译结果, 避免每次运行都编译
     // 因为 java 需要编译, 同时要判断 java 的代码是否发生了变化, 这里需要引入 md5 进行处理

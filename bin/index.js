@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 const program = require('commander');
-const path = require('path');
-const shell = require('shelljs');
 const packageInfo = require('../package.json');
-require('../server/app/init');
+const initProject = require('../server/app/init');
 const checkUpdate = require('../utils/checkUpdate');
 const config = require('../lib/config');
-const runApp = require('../server/app/index');
 
 (async function () {
+  // 初始化
+  await initProject();
+  const runApp = require('../server/app/index');
   // 检查更新
   const result = await checkUpdate();
   if (result.hasUpdate) {

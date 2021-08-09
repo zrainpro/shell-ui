@@ -1,11 +1,9 @@
 'use strict';
 const Koa = require('koa');
-const bodyParser = require('koa-bodyparser');
 const koaBody = require('koa-body');
 const send = require('koa-send');
 const fs = require('fs');
 const path = require('path');
-require('./init');
 const router = require('./router');
 const runApp = require('./utils/run');
 
@@ -28,10 +26,26 @@ module.exports = (port = 3000) => {
     } else {
       const paths = ctx.path;
       const dirPath = path.resolve(__dirname, '../web' + paths);
-      if (fs.existsSync(dirPath)) {
-        await send(ctx, path.resolve(__dirname, '../web' + paths), { root: '/', index: 'index.html', hidden: true })
+      if (
+          (ctx.acceptsEncodings('br', 'identity') === 'br' && fs.existsSync(dirPath + '.br')) ||
+          (ctx.acceptsEncodings('gzip', 'identity') === 'gzip' && fs.existsSync(dirPath + '.gz')) ||
+          fs.existsSync(dirPath)
+      ) {
+        await send(ctx, path.resolve(__dirname, '../web' + paths), {
+          root: '/',
+          index: 'index.html',
+          hidden: true,
+          gzip: true,
+          br: true
+        })
       } else {
-        await send(ctx, path.resolve(__dirname, '../web/index.html'), { root: '/', index: 'index.html', hidden: true })
+        await send(ctx, path.resolve(__dirname, '../web/index.html'), {
+          root: '/',
+          index: 'index.html',
+          hidden: true,
+          gzip: true,
+          br: true
+        })
       }
     }
   });

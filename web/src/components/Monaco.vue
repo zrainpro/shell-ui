@@ -10,7 +10,7 @@
     props: {
       lang: {
         type: String,
-        default: 'javascript'
+        default: 'nodejs'
       },
       height: {
         type: Number,
@@ -23,7 +23,11 @@
     },
     data() {
       return {
-        form: ''
+        form: '',
+        // 语言类型进行转换
+        langTransform: {
+          zx: 'javascript'
+        }
       }
     },
     mounted () {
@@ -52,7 +56,8 @@
     },
     watch: {
       lang() {
-        monaco.editor.setModelLanguage(this.monacoInstance.getModel(), this.lang);
+        const lang = this.langTransform[this.lang] || this.lang;
+        monaco.editor.setModelLanguage(this.monacoInstance.getModel(), lang);
       },
       value() {
         if (this.value !== this.form) {

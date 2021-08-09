@@ -1,14 +1,18 @@
 'use strict';
 const Base = require('../utils/baseClass');
 const utils = require('../utils/index');
-const fs = require('fs');
-const path = require('path');
 
 class Edit extends Base {
   constructor(props) {
     super(props);
   }
-  // 创建脚本
+
+  /**
+   * 创建脚本
+   * @param ctx
+   * @param next
+   * @returns {Promise<void>}
+   */
   async create (ctx, next) {
     const params = ctx.request.body;
     const result = utils.createInstruct({ _this: this, params });
@@ -21,7 +25,13 @@ class Edit extends Base {
       message: '创建成功'
     };
   }
-  // 编辑脚本
+
+  /**
+   * 编辑脚本
+   * @param ctx
+   * @param next
+   * @returns {Promise<void>}
+   */
   async edit (ctx, next) {
     const params = ctx.request.body;
     const result = await utils.editInstruct({ _this: this, params });
@@ -34,7 +44,13 @@ class Edit extends Base {
       message: '修改成功'
     }
   }
-  // 删除脚本
+
+  /**
+   * 删除脚本
+   * @param ctx
+   * @param next
+   * @returns {Promise<void>}
+   */
   async remove (ctx, next) {
     const params = ctx.params;
     const result = await utils.removeInstruct({ _this: this, params });
@@ -47,7 +63,13 @@ class Edit extends Base {
       message: '删除成功'
     }
   }
-  // 启用禁用
+
+  /**
+   * 启用禁用脚本
+   * @param ctx
+   * @param next
+   * @returns {Promise<void>}
+   */
   async enable (ctx, next) {
     const params = ctx.request.body;
     const result = await utils.enableInstruct({ _this: this, params });
