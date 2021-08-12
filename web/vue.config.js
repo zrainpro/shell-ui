@@ -38,7 +38,7 @@ module.exports = {
     },
     plugins: [
       new MonacoWebpackPlugin({
-        languages: ['javascript', 'python', 'java', 'go', 'shell']
+        languages: ['javascript', 'python', 'java', 'go', 'shell', 'systemverilog']
       })
     ]
   },
@@ -60,6 +60,7 @@ module.exports = {
       gzip: {
         filename: '[file].gz[query]',
         algorithm: 'gzip',
+        exclude: 'index.html',
         include: /\.(js|css|html|svg|json)(\?.*)?$/i,
         minRatio: 0.8,
         deleteOriginalAssets: true

@@ -15,10 +15,14 @@ router.post('/api/edit', controller.edit.edit)
 // 删除脚本
 router.post('/api/delete/:id', controller.edit.remove);
 // 启用 / 禁用脚本
-router.post('/api/enable', controller.edit.enable)
+router.post('/api/enable', controller.edit.enable);
 // 导出脚本
-router.get('/api/export', controller.export.export)
+router.get('/api/export', controller.export.export);
 // 导入脚本
-router.post('/api/import', controller.export.import)
+router.post('/api/import', controller.export.import);
+// 执行脚本
+router.post('/api/exec', controller.exec.exec);
+// home 路径地址
+router.get('/api/homedir', controller.exec.homeDir)
 
 module.exports = router;

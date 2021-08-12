@@ -1,46 +1,56 @@
 <template>
   <div id="app" :style="`min-width: ${state.collapsed ? '744px' : '884px'}`">
-    <div class="menu" :style="`width: ${state.collapsed ? '80px' : '220px'}`">
-      <div class="nav-item" @click.stop="state.collapsed = !state.collapsed">
-        <a-tooltip placement="right">
-          <UnorderedListOutlined />
-        </a-tooltip>
-      </div>
-      <a-menu
-          v-model:selectedKeys="menu.selectedKeys"
-          mode="inline"
-          theme="light"
-          :inline-collapsed="state.collapsed"
-      >
-        <a-menu-item @click="clickMenu(item)" :key="item.path" v-for="item in menu.list">
-          <router-link :to="item.path">
+    <div class="app-box">
+      <!-- 菜单 -->
+      <div class="menu" :style="`width: ${state.collapsed ? '80px' : '220px'}`">
+        <div class="nav-item" @click.stop="state.collapsed = !state.collapsed">
+          <a-tooltip placement="right">
+            <UnorderedListOutlined />
+          </a-tooltip>
+        </div>
+        <a-menu
+            v-model:selectedKeys="menu.selectedKeys"
+            mode="inline"
+            theme="light"
+            :inline-collapsed="state.collapsed"
+        >
+          <a-menu-item @click="clickMenu(item)" :key="item.path" v-for="item in menu.list">
+            <router-link :to="item.path">
             <span>
               <component :is="item.icon"></component>
               <span>{{item.name}}</span>
             </span>
-          </router-link>
-        </a-menu-item>
-      </a-menu>
+            </router-link>
+          </a-menu-item>
+        </a-menu>
+      </div>
+      <!-- 内容 -->
+      <div class="content">
+        <router-view v-slot="{ Component }">
+          <transition>
+            <component :is="Component"></component>
+          </transition>
+        </router-view>
+      </div>
     </div>
-    <div class="content">
-      <router-view v-slot="{ Component }">
-        <transition>
-          <component :is="Component"></component>
-        </transition>
-      </router-view>
+    <!-- 底部 command -->
+    <div class="command-box">
+      <command />
     </div>
   </div>
 </template>
 <script>
   import { reactive, onMounted } from 'vue';
   import { BlockOutlined, CodeOutlined, SettingOutlined, UnorderedListOutlined } from '@ant-design/icons-vue';
+  import Command from './components/command';
 
   export default {
     components: {
       BlockOutlined,
       CodeOutlined,
       SettingOutlined,
-      UnorderedListOutlined
+      UnorderedListOutlined,
+      Command
     },
     setup() {
       // 声明菜单数据
@@ -83,15 +93,29 @@
   -moz-osx-font-smoothing: grayscale;
   color: #2c3e50;
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   align-items: flex-start;
   justify-content: flex-start;
   width: 100vw;
   height: 100vh;
 }
+.app-box {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: flex-start;
+  width: 100vw;
+  height: auto;
+  flex: 1;
+  overflow: auto;
+}
+.command-box {
+  width: 100vw;
+  min-height: 20px;
+}
 .menu {
   width: 220px;
-  height: 100vh;
+  height: 100%;
   box-shadow: rgba(0, 0, 0, 0.1) 2px 0px 10px;
   position: relative;
   z-index: 2;
@@ -110,7 +134,7 @@
 }
 .content {
   flex: 1;
-  height: 100vh;
+  height: 100%;
   overflow: auto;
   padding: 16px;
   background: rgb(187, 230, 214);

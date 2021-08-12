@@ -108,7 +108,7 @@ async function editInstruct({ _this, params }) {
                 shell: data.shell || ''
             });
             // 如果更新了 shell 脚本, 那么需要重新写入 对应的脚本文件, 修改了脚本类型应该删除之前的脚本
-            if (oldCommand.shell !== data.shell && fileType[data.type]) {
+            if (((oldCommand.shell !== data.shell) || (oldCommand.type !== data.type)) && fileType[data.type]) {
                 // 如果脚本类型发生了变化应该删除之前的脚本
                 const oldPath = path.resolve(rootPath, `../shell-ui-database/lib/userShell/${oldCommand.command}.${fileType[oldCommand.type]}`);
                 if (oldCommand.type !== data.type && fs.existsSync(oldPath)) {
@@ -160,23 +160,24 @@ async function editInstruct({ _this, params }) {
         } else {
             // 只是简单的修改了子指令的值
             const parent = json.get(`shell.${data.parent}`);
-            const item = parent.children.find(item => item.id === data.id);
-            if (!item) {
+            const oldCommand = parent.children.find(item => item.id === data.id);
+            if (!oldCommand) {
                 return { error: '找不到您要修改的指令呢.... 请返回上一级刷新最新的数据呢....' }
             }
-            // 如果修改了子指令的 command 并且 type 是 shell 类型的
-            if (item.command !== data.command) {
+            // 如果修改了子指令的 command 或者 type 需要删除旧的脚本文件
+            if (oldCommand.command !== data.command || oldCommand.type !== data.type) {
                 // 删除旧的子指令
-                shell.rm('-f', path.resolve(rootPath, `../shell-ui-database/lib/userShell/${parent.command}/${item.command}.${fileType[item.type]}`));
+                shell.rm('-f', path.resolve(rootPath, `../shell-ui-database/lib/userShell/${parent.command}/${oldCommand.command}.${fileType[oldCommand.type]}`));
             }
-            item.command = data.command;
-            item.alias = data.alias;
-            item.description = data.description || '';
-            item.type = data.type || 'shell';
-            item.shell = data.shell || '';
+            // type 类型修改-删除旧的指令
+            oldCommand.command = data.command;
+            oldCommand.alias = data.alias;
+            oldCommand.description = data.description || '';
+            oldCommand.type = data.type || 'shell';
+            oldCommand.shell = data.shell || '';
             // 如果新的子指令是 shell 类型的, 创建新的子 shell 脚本
-            if (fileType[item.type]) {
-                fs.writeFileSync(path.resolve(rootPath, `../shell-ui-database/lib/userShell/${parent.command}/${item.command}.${fileType[item.type]}`), item.shell);
+            if (fileType[oldCommand.type]) {
+                fs.writeFileSync(path.resolve(rootPath, `../shell-ui-database/lib/userShell/${parent.command}/${oldCommand.command}.${fileType[oldCommand.type]}`), oldCommand.shell);
             }
             json.write();
         }

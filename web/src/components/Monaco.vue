@@ -3,7 +3,7 @@
 </template>
 
 <script>
-  import * as monaco from 'monaco-editor/esm/vs/editor/editor.api.js';
+  import Monaco from '../utils/monaco';
 
   export default {
     name: 'monaco-editor',
@@ -34,22 +34,21 @@
       // window.monaco = monaco
       // console.log(monaco.editor.DefaultEndOfLine)
       // monaco.editor.EndOfLineSequence
-      this.monacoInstance = monaco.editor.create(this.$refs.editor, {
-        language: this.lang,
-        tabSize: 2,
-        value: this.value,
-        theme: 'vs-dark'
-      })
-      // window.instance = this.monacoInstance;
-      this.monacoInstance.onDidChangeModelContent(() => {
-        clearTimeout(this.timer);
-        this.timer = setTimeout(() => {
+      this.monacoInstance = new Monaco({
+        el: this.$refs.editor,
+        options: {
+          language: this.lang,
+          tabSize: 2,
+          value: this.value,
+          theme: 'vs-dark'
+        },
+        change: () => {
           // todo 找 monaco 的方法设置换行符为 IF(\n) 目前 window 下编辑换行是 \r\n
           this.form = (this.monacoInstance.getValue() || '').replace(/\r\n/g, '\n');
           // console.log({ v: this.form }, 'this.form')
           this.$emit('update:value', this.form)
-        }, 500);
-      })
+        }
+      });
     },
     unmounted () {
       this.monacoInstance.dispose();
@@ -57,7 +56,7 @@
     watch: {
       lang() {
         const lang = this.langTransform[this.lang] || this.lang;
-        monaco.editor.setModelLanguage(this.monacoInstance.getModel(), lang);
+        this.monacoInstance.setLang(lang);
       },
       value() {
         if (this.value !== this.form) {

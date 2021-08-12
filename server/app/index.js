@@ -39,7 +39,7 @@ module.exports = (port = 3000) => {
           br: true
         })
       } else {
-        await send(ctx, path.resolve(__dirname, '../web/index.html'), {
+        await send(ctx, path.resolve(__dirname, '../web/index.html.gz'), {
           root: '/',
           index: 'index.html',
           hidden: true,
