@@ -1,6 +1,6 @@
 {
   "name": "shell-ui",
-  "version": "0.1.13-BETA-5",
+  "version": "0.1.13-BETA-6",
   "description": "a visualization shell manage tools",
   "main": "index.js",
   "scripts": {
@@ -20,8 +20,10 @@
     "koa": "^2.13.1",
     "koa-body": "^4.2.0",
     "koa-bodyparser": "^4.3.0",
+    "koa-route": "^3.2.0",
     "koa-router": "^10.0.0",
     "koa-send": "^5.0.1",
+    "koa-websocket": "^6.0.0",
     "lodash": "^4.17.21",
     "log-symbols": "^4.1.0",
     "pacote": "^11.3.3",

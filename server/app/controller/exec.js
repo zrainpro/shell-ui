@@ -31,12 +31,12 @@ class Exec extends Base {
    */
   async exec(ctx, next) {
     const params = ctx.request.body;
-    console.log('路径是: ' + params.path);
-    console.log('pwd' + shell.pwd());
     const { code, stdout, stderr, path } = await new Promise((resolve) => {
       shell.cd(params.path);
       const path = shell.pwd(); // cd ${params.path} \n
-      shell.exec(`${params.command}`, (code, stdout, stderr) => {
+      shell.exec(`${params.command}`, {
+        silent: true
+      }, (code, stdout, stderr) => {
         resolve({ code, stdout, stderr, path: shell.pwd() });
       });
     });

@@ -66,7 +66,7 @@
       // mounted 的时候修改 菜单项
       onMounted(() => {
         menu.active = menu.list.find(_ => new RegExp(`^${_.path}`).test(location.pathname));
-        menu.selectedKeys = [menu.active.path];
+        menu.active && (menu.selectedKeys = [menu.active.path]);
       });
 
       const state = reactive({

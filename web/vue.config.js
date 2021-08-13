@@ -23,6 +23,12 @@ module.exports = {
         changeOrigin: true,
         pathRewrite: {
         }
+      },
+      '/terminal': {
+        target: 'http://[::1]:3000',
+        pathRewrite: {
+        },
+        ws: true
       }
     }
   },

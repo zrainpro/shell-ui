@@ -20,17 +20,21 @@
     data() {
       return {
         homedir: '',
-        username: ''
+        username: '',
+        uuid: ''
       }
     },
     async mounted() {
-      if (!this.homedir) {
-        const result = await this.apiGet('/api/homedir');
-        if (result.code === 200) {
-          this.homedir = result.data.homedir;
-          this.username = result.data.username;
-        }
-      }
+      // 建立 长链接
+      await this.createSocket()
+
+      // if (!this.homedir) {
+      //   const result = await this.apiGet('/api/homedir');
+      //   if (result.code === 200) {
+      //     this.homedir = result.data.homedir;
+      //     this.username = result.data.username;
+      //   }
+      // }
       new Terminal({
         el: this.$refs.command,
         homedir: this.homedir,
@@ -39,13 +43,47 @@
         exec: this.exec.bind(this)
       });
     },
+    beforeUnmount() {
+      this.ws.close();
+    },
     methods: {
-      async exec(value, path) {
-        const result = await this.apiPost('/api/exec', { command: value, path });
-        return {
-          output: result.data.stdout,
-          error: result.data.stderr
-        };
+      async createSocket() {
+        return new Promise(resolve => {
+          this.ws = new WebSocket( (location.protocol === 'http:' ? 'ws://' : 'wss://') + location.host + '/terminal');
+
+          this.ws.onopen = () => {
+            this.ws.send('hello shell-ui');
+          };
+
+          this.ws.onmessage = (evt) => {
+            if (evt.data === 'hello shell-ui-serve') return
+            try {
+              const result = JSON.parse(evt.data);
+              if (result.homedir || result.username) {
+                this.homedir = result.homedir;
+                this.username = result.username;
+                this.uuid = result.uuid;
+                resolve();
+              } else {
+                this.callback && this.callback({
+                  output: result.stdout,
+                  error: result.stderr,
+                  running: result.running
+                });
+              }
+            } catch (e) {
+              console.error(e);
+            }
+          };
+
+          this.ws.onclose = function() {
+          }
+        });
+      },
+      async exec(value, path, callback) {
+        // const result = await this.apiPost('/api/exec', { command: value, path });
+        this.ws.send(JSON.stringify({ command: value, path, uuid: this.uuid }));
+        this.callback = callback;
       }
     }
   }
@@ -102,6 +140,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 10px 30px 0 30px;
+    cursor: row-resize;
   }
   .zr-inline {
     display: flex;
@@ -109,6 +148,7 @@
     justify-content: flex-start;
     align-items: center;
     height: 100%;
+    cursor: unset;
   }
   .zr-icon {
     width: 100%;
@@ -127,5 +167,33 @@
   }
   .zr-btn + .zr-btn {
     margin-left: 8px;
+  }
+  .zr-tooltip {
+    position: relative;
+  }
+  .zr-tooltip:hover::before {
+    content: attr(title);
+    width: max-content;
+    max-width: 300px;
+    padding: 10px;
+    background-color: rgba(53, 73, 96, 0.8);
+    color: #ffffff;
+    position: absolute;
+    right: 0;
+    bottom: 30px;
+    z-index: 1;
+  }
+  .zr-tooltip:hover::after {
+    content: '';
+    width: 0;
+    height: 0;
+    border: 5px solid rgba(53, 73, 96, 0.8);
+    border-left-color: transparent;
+    border-top-color: transparent;
+    transform: rotate(45deg);
+    position: absolute;
+    right: 8px;
+    bottom: 25px;
+    z-index: 1;
   }
 </style>

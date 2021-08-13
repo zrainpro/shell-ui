@@ -2,14 +2,19 @@
 const Koa = require('koa');
 const koaBody = require('koa-body');
 const send = require('koa-send');
+const websockify = require('koa-websocket');
 const fs = require('fs');
 const path = require('path');
 const router = require('./router');
 const runApp = require('./utils/run');
+const execCommand = require('./ws/exec');
 
 module.exports = (port = 3000) => {
-  const app = new Koa();
+  const app = websockify(new Koa());
 // app.use(bodyParser());
+
+  execCommand(app); // websocket
+
   app.use(koaBody({ multipart: true }))
   app.use(async function(ctx, next) {
     if ((new RegExp('^/api')).test(ctx.url)) {
@@ -39,7 +44,7 @@ module.exports = (port = 3000) => {
           br: true
         })
       } else {
-        await send(ctx, path.resolve(__dirname, '../web/index.html.gz'), {
+        await send(ctx, path.resolve(__dirname, '../web/index.html'), {
           root: '/',
           index: 'index.html',
           hidden: true,

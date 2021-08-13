@@ -14,6 +14,7 @@ export default class Terminal {
   logHeight = 180; // log 日志窗口高度
   path = ''; // 路径管理, 主页路径地址由外部传入, 外部不传默认从 / 根路径执行
   username = ''; // 系统用户
+  running = false; // 是否有进程在运行中, 有进程在运行中不显示 用户 路径的等信息
   constructor(props) {
     this.monacoOptions = props.monacoOptions; // monaco 的选项
     this.el = props.el;
@@ -58,14 +59,14 @@ export default class Terminal {
               attrs: [['class', 'zr-inline']],
               child: [
                 {
-                  attrs: [['class', 'zr-btn'], ['title', '清空日志'], ['style', 'height: 22px;width: 22px']],
+                  attrs: [['class', 'zr-btn zr-tooltip'], ['title', '清空日志'], ['style', 'height: 22px;width: 22px']],
                   child: `${this.icon.delete}`,
                   events: {
                     click: this.clearLog.bind(this)
                   }
                 },
                 {
-                  attrs: [['class', 'zr-btn'], ['style', 'height: 22px;width: 22px']],
+                  attrs: [['class', 'zr-btn zr-tooltip'], ['title', '关闭日志窗口'], ['style', 'height: 22px;width: 22px']],
                   child: `${this.icon.close}`,
                   events: {
                     click: () => {
@@ -75,7 +76,16 @@ export default class Terminal {
                 }
               ]
             }
-          ]
+          ],
+          callback: (target) => {
+            // 添加 可变窗口处理
+            window.requestAnimationFrame(() => {
+              Terminal.resizeAble(target, this.logDom, 'y', ({ height }) => {
+                this.logHeight = height;
+                return true;
+              })
+            })
+          }
         }
       ]
     });
@@ -117,6 +127,7 @@ export default class Terminal {
           events: {
             enter: async (event) => {
               const command = event.target.value.trim(); // 去除前后空格并拿到指令
+              event.target.value = '';
 
               this.log && (this.log += '\n');
               // 空内容直接返回
@@ -124,24 +135,21 @@ export default class Terminal {
                 this.monaco.setValue(this.log);
                 return;
               }
-              this.log += `${this.username}@${this.path}% ${new Date().toLocaleString()} %  ${command}\n`; // 将输入指令加到日志里面
-              event.target.value = '';
+              if (!this.running) {
+                this.log += `${this.username}@${this.path}% ${new Date().toLocaleString()} %  ${command}\n`; // 将输入指令加到日志里面
+              }
 
               // 解释执行 command
-              await this.detailCommand(command);
-
-              this.monaco.setValue(this.log);
-              this.monaco.instance.setScrollTop(1000000);
+              this.detailCommand(command);
             },
             click: () => {
               // 展示 log 日志
-              Terminal.updateElement({ dom: this.logDom, attrs: [['style', 'display: none']] })
-              this.logDom.setAttribute('style', 'display: block');
+              Terminal.updateElement({ dom: this.logDom, attrs: [['style', 'display: block']] });
             }
           }
         },
         {
-          attrs: [['class', 'zr-btn'], ['title', '反馈 bug'], ['style', 'height: 20px;width: 30px;padding: 0 5px']],
+          attrs: [['class', 'zr-btn zr-tooltip'], ['title', '反馈 bug'], ['style', 'height: 20px;width: 30px;padding: 0 5px']],
           child: this.icon.bug,
           events: {
             click() {
@@ -157,14 +165,20 @@ export default class Terminal {
    * 解释执行命令, 集成内部执行与外部执行
    * @param command
    */
-  async detailCommand(command) {
+  detailCommand(command) {
     const needContinue = this.detailCommandBefore(command);
     if (needContinue) {
-      const result = await this.exec(command, this.path);
-      if (!result.error) {
-        this.detailCommandAfter(command);
-      }
-      this.log += (result.error || result.output);
+      let once = true;
+      this.exec(command, this.path, (result) => {
+        if (!result.error && once) {
+          once = false;
+          this.detailCommandAfter(command);
+        }
+        this.log += (result.error || result.output);
+        this.running = result.running;
+        this.monaco.setValue(this.log);
+        this.monaco.instance.setScrollTop(1000000);
+      });
     }
   }
 
@@ -206,7 +220,8 @@ export default class Terminal {
    * @returns {Promise<*|string>}
    */
   exec(...args) {
-    return Promise.resolve(this.execFunc ? this.execFunc.call(this, ...args) : '');
+    this.execFunc && this.execFunc.call(this, ...args);
+    // return Promise.resolve(this.execFunc ? this.execFunc.call(this, ...args) : '');
   }
 
   /**
@@ -234,7 +249,7 @@ export default class Terminal {
   /**
    * 创建 element 元素
    */
-  static createElement({ name = 'div', bind = '', attrs = [], child = null, events = {} }, thisArg) {
+  static createElement({ name = 'div', bind = '', attrs = [], child = null, events = {}, callback }, thisArg) {
     const temp = document.createElement(name);
 
     // 添加属性
@@ -288,14 +303,19 @@ export default class Terminal {
         if (keyCode[eventName]) {
           temp.addEventListener('keydown', (event) => {
             if (keyCode[eventName].includes(event.keyCode)) {
-              callback.call(null, event);
+              callback.call(null, event, temp);
             }
           });
         } else {
-          temp.addEventListener(eventName, callback);
+          temp.addEventListener(eventName, (event) => {
+            callback.call(null, event, temp);
+          });
         }
       })
     }
+
+    // 处理回调
+    callback && callback(temp);
 
     return temp;
   }
@@ -304,24 +324,83 @@ export default class Terminal {
    * 更新 element 元素内部的属性
    */
   static updateElement({ dom, attrs = [] }) {
+    const getAttrs = (str = '', oldAttr = {}) => {
+      return (str || '').split(';').reduce((a, b) => {
+        const [keyS = '', valueS = ''] = b.split(':');
+        const key = keyS.trim();
+        const value = valueS.trim();
+        if (key === 'remove') {
+          delete oldAttr[value];
+        } else if (key) {
+          a[key] = value
+        }
+        return a;
+      }, {});
+    }
     if (dom instanceof Element) {
-      // 更新属性
+      // 更新属性, 定义删除属性的方式: remove : 属性名
       attrs.forEach(item => {
         if (typeof item === 'string') {
           dom.setAttribute(item, 'true');
         } else if (item instanceof Array) {
-          const oldAttr = dom.getAttribute(item[0]).split(';');
-          const newAttr = item[1].split(';');
-          dom.setAttribute(item[0], Array.from(new Set([...oldAttr, ...newAttr])).join(';'));
+          const oldAttr = getAttrs(dom.getAttribute(item[0]));
+          const newAttr = getAttrs(item[1], oldAttr);
+
+          dom.setAttribute(item[0], Object.entries({ ...oldAttr, ...newAttr }).map(([key, val]) => `${key}:${val}`).join(';'));
         } else if (item instanceof Object) {
-          const oldAttr = dom.getAttribute(item.attr).split(';');
-          const newAttr = item.value.split(' ');
-          dom.setAttribute(item.attr, Array.from(new Set([...oldAttr, ...newAttr])).join(';'));
+          const oldAttr = getAttrs(item.attr);
+          const newAttr = getAttrs(item.value, oldAttr);
+          dom.setAttribute(item.attr, Object.entries({ ...oldAttr, ...newAttr }).map(([key, val]) => `${key}:${val}`).join(';'));
         }
       });
     } else {
       console.error('dom required Element type, but got ' + dom);
     }
+  }
+
+  static resizeAble(resizeDom, targetDom, type = 'xy', callback) {
+    resizeDom.addEventListener('mousedown', (event) => {
+      const target = {
+        canMove: true,
+        currentY: event.pageY,
+        currentX: event.pageX,
+        currentHeight: targetDom.clientHeight,
+        currentWidth: targetDom.clientWidth,
+        moveable: true
+      }
+      Terminal.updateElement({ dom: document.body, attrs: [['style', 'user-select: none']] });
+      // 同时在 window 上添加一个 mouseup 事件
+      const mouseup = () => {
+        target.canMove = false;
+        window.removeEventListener('mouseup', mouseup);
+        window.removeEventListener('mousemove', mousemove);
+        Terminal.updateElement({ dom: document.body, attrs: [['style', 'remove: user-select']] });
+      }
+      const mousemove = (event) => {
+        if (!target.moveable) return
+        target.moveable = false;
+        window.requestAnimationFrame(() => {
+          target.moveable = true;
+          const xCan = type.includes('x');
+          const yCan = type.includes('y');
+          const width = target.currentWidth + target.currentX - event.pageX;
+          const height = target.currentHeight + target.currentY - event.pageY;
+          const canResize = callback ? callback.call(null, { width, height }) : true;
+          if (canResize) {
+            let str = '';
+            if (xCan) {
+              str += `width: ${width}px`;
+            }
+            if (yCan) {
+              str += `${str ? ';' : ''}height: ${height}px`;
+            }
+            Terminal.updateElement({ dom: targetDom, attrs: [['style', str]] });
+          }
+        });
+      }
+      window.addEventListener('mouseup', mouseup);
+      window.addEventListener('mousemove', mousemove);
+    })
   }
 
   /**
