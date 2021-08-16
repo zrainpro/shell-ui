@@ -39,7 +39,7 @@ const config = require('../lib/config');
     } else {
       const [ command ] = cmd.args;
       if (!command || command === 'start') {
-        runApp(parseInt(options.port));
+        runApp(options.port);
       } else {
         program.help();
       }

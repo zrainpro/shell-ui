@@ -10,6 +10,7 @@ const runApp = require('./utils/run');
 const execCommand = require('./ws/exec');
 
 module.exports = (port = 3000) => {
+  port = parseInt(port) || 3000;
   const app = websockify(new Koa());
 // app.use(bodyParser());
 
