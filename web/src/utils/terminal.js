@@ -231,9 +231,7 @@ export default class Terminal {
     // 分别处理成地址栈
     const s = source.split(/\\|\//);
     const d = dir.split(/\\|\//);
-    console.log(s, d)
     for (let path of d) {
-      console.log(path);
       if (path === '..') {
         s.pop();
       } else if (path === '.') {
@@ -242,8 +240,8 @@ export default class Terminal {
         s.push(path);
       }
     }
-    console.log(s)
-    return s.join('/');
+    const temp = s.join('/');
+    return temp ? temp : '/';
   }
 
   /**

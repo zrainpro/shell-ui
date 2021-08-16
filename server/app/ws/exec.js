@@ -37,6 +37,7 @@ module.exports = function (app) {
           ctx.websocket.send(JSON.stringify({ stdout: '进程结束成功!', stderr: '' }));
         }
         ctx.websocket.send(JSON.stringify({ stdout: params.command, stderr: '', running: true }));
+        ctx.websocket.send(JSON.stringify({ stdout: '如果想退出脚本执行其他脚本请先输入 exit 哦', stderr: '', running: true }));
       } else {
         shell.cd(params.path);
         // path: shell.pwd()
