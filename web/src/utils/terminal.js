@@ -381,8 +381,11 @@ export default class Terminal {
           target.moveable = true;
           const xCan = type.includes('x');
           const yCan = type.includes('y');
-          const width = target.currentWidth + target.currentX - event.pageX;
-          const height = target.currentHeight + target.currentY - event.pageY;
+          let width = target.currentWidth + target.currentX - event.pageX;
+          let height = target.currentHeight + target.currentY - event.pageY;
+          // 判断是否超出屏幕
+          width = width > window.innerWidth ? window.innerWidth : width;
+          height = height > window.innerHeight ? window.innerHeight : height;
           const canResize = callback ? callback.call(null, { width, height }) : true;
           if (canResize) {
             let str = '';
