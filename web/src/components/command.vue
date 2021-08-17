@@ -64,6 +64,8 @@
                 this.username = result.username;
                 this.uuid = result.uuid;
                 resolve();
+              } else if (this.type === 'tab') {
+                this.callback && this.callback(result.data)
               } else {
                 this.callback && this.callback({
                   output: result.stdout,
@@ -80,10 +82,11 @@
           }
         });
       },
-      async exec(value, path, callback) {
+      async exec(value, path, callback, type = 'normal') {
         // const result = await this.apiPost('/api/exec', { command: value, path });
-        this.ws.send(JSON.stringify({ command: value, path, uuid: this.uuid }));
+        this.ws.send(JSON.stringify({ command: value, path, uuid: this.uuid, type }));
         this.callback = callback;
+        this.type = type;
       }
     }
   }

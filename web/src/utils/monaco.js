@@ -92,6 +92,14 @@ export default class Monaco {
   }
 
   /**
+   * 内容滚动到指定位置
+   * @param value
+   */
+  scrollTo(value = 0) {
+    this.monaco.setScrollTop(value);
+  }
+
+  /**
    * 卸载
    */
   dispose() {

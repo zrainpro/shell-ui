@@ -10,11 +10,15 @@ export default class Terminal {
   maxCount = 200;
   monaco; // monaco editor 实例
   log = ''; // 日志
+  logTemp = ''; // 临时日志, 用于非永久显示的日志
   logDom; // log 日志窗口的 dom
+  inputDom;
   logHeight = 180; // log 日志窗口高度
   path = ''; // 路径管理, 主页路径地址由外部传入, 外部不传默认从 / 根路径执行
   username = ''; // 系统用户
   running = false; // 是否有进程在运行中, 有进程在运行中不显示 用户 路径的等信息
+  history = []; // 输入历史
+  historyIndex = 0; // 输入历史下标
   constructor(props) {
     this.monacoOptions = props.monacoOptions; // monaco 的选项
     this.el = props.el;
@@ -50,6 +54,9 @@ export default class Terminal {
   createLog() {
     this.logDom = Terminal.createElement({
       attrs: [['class', 'zr-terminal-log'], ['style', `height: ${this.logHeight}px;display: none;`]],
+      events: {
+        keydown: () => this.inputDom.focus()
+      },
       child: [
         {
           attrs: [['class', 'zr-terminal-log-header']],
@@ -77,12 +84,22 @@ export default class Terminal {
               ]
             }
           ],
+          events: {
+            dblclick: () => {
+              this.logHeight = window.innerHeight - 20;
+              Terminal.updateElement({ dom: this.logDom, attrs: [['style', `height: ${this.logHeight}px`]] })
+            }
+          },
           callback: (target) => {
             // 添加 可变窗口处理
             window.requestAnimationFrame(() => {
               Terminal.resizeAble(target, this.logDom, 'y', ({ height }) => {
-                this.logHeight = height;
-                return true;
+                if (height < (window.innerHeight - 20)) {
+                  this.logHeight = height;
+                  return true;
+                } else {
+                  return false;
+                }
               })
             })
           }
@@ -128,6 +145,7 @@ export default class Terminal {
             enter: async (event) => {
               const command = event.target.value.trim(); // 去除前后空格并拿到指令
               event.target.value = '';
+              this.logTemp = ''; // 把临时日志清空
 
               this.log && (this.log += '\n');
               // 空内容直接返回
@@ -135,8 +153,17 @@ export default class Terminal {
                 this.monaco.setValue(this.log);
                 return;
               }
+              // 保存输入历史
+              if (this.history.length > 100) {
+                this.history.pop();
+              }
+              this.history.unshift(command);
+              this.historyIndex = 0;
+              // 打印命令
               if (!this.running) {
                 this.log += `${this.username}@${this.path}% ${new Date().toLocaleString()} %  ${command}\n`; // 将输入指令加到日志里面
+                this.monaco.setValue(this.log);
+                this.monaco.scrollTo(1000000);
               }
 
               // 解释执行 command
@@ -145,7 +172,34 @@ export default class Terminal {
             click: () => {
               // 展示 log 日志
               Terminal.updateElement({ dom: this.logDom, attrs: [['style', 'display: block']] });
+            },
+            up: (event) => {
+              // 历史输入内容
+              event.stopPropagation();
+              this.historyIndex = ++this.historyIndex < this.history.length ? this.historyIndex : (this.historyIndex - 1)
+              if (this.history[this.historyIndex]) {
+                event.target.value = this.history[this.historyIndex];
+              }
+            },
+            down: (event) => {
+              // 历史输入内容
+              event.stopPropagation();
+              this.historyIndex = --this.historyIndex > 0 ? this.historyIndex : 0;
+              if (this.history[this.historyIndex]) {
+                event.target.value = this.history[this.historyIndex];
+              }
+            },
+            tab: (event) => {
+              event.preventDefault();
+              // tab 补全
+              console.log(event.target.value);
+              const command = event.target.value;
+              // 解释执行 command
+              this.detailTab(command);
             }
+          },
+          callback: (target) => {
+            this.inputDom = target;
           }
         },
         {
@@ -162,6 +216,35 @@ export default class Terminal {
   }
 
   /**
+   * 处理 tab 补全
+   * @param command
+   */
+  detailTab(command) {
+    // detailPath
+    let commandPath = command.split(/ +/).slice(-1)[0];
+    // 拿出未写全的地址
+    let p = commandPath.match(/([a-z]|[A-Z]|[_]|[-]|[1-9]|[.])+$/);
+    p = p && p.length ? p[0] : '';
+    const dir = commandPath.replace(p, '');
+    this.exec(p, Terminal.detailPath(this.path, dir), (result) => {
+      if (!result.length) {
+        this.logTemp = '';
+        this.monaco.setValue(`${this.log}\n抱歉没有匹配到结果呢`);
+        this.monaco.scrollTo(1000000);
+        return
+      }
+      if (result.length === 1) {
+        this.inputDom.value = command.replace(p, '') + result[0];
+        this.monaco.setValue(this.log);
+      } else {
+        this.logTemp = Terminal.stdoutTable(result);
+        this.monaco.setValue(`${this.log}\n为您匹配到如下结果:\n${this.logTemp}`);
+        this.monaco.scrollTo(1000000);
+      }
+    }, 'tab')
+  }
+
+  /**
    * 解释执行命令, 集成内部执行与外部执行
    * @param command
    */
@@ -174,11 +257,16 @@ export default class Terminal {
           once = false;
           this.detailCommandAfter(command);
         }
+        // 对于 ls 罗列进行特殊处理, 让其不换行
+        if (command.toLowerCase() === 'ls' || command.startsWith('ls ')) {
+          // 一行显示五个内容, 一行显示一百个字符, 动态规划一行显示的个数
+          result.output = Terminal.stdoutTable((result.output || '').split('\n'));
+        }
         this.log += (result.error || result.output);
         this.running = result.running;
         this.monaco.setValue(this.log);
-        this.monaco.instance.setScrollTop(1000000);
-      });
+        this.monaco.scrollTo(1000000);
+      }, 'normal');
     }
   }
 
@@ -295,7 +383,12 @@ export default class Terminal {
     const eventsArr = Object.entries(events);
     if (eventsArr.length) {
       const keyCode = {
-        enter: [108, 13]
+        enter: [108, 13],
+        left: [37],
+        up: [38],
+        right: [39],
+        down: [40],
+        tab: [9]
       }
       eventsArr.forEach(([eventName, callback]) => {
         if (keyCode[eventName]) {
@@ -356,6 +449,13 @@ export default class Terminal {
     }
   }
 
+  /**
+   * 设置元素宽高可拖拽
+   * @param resizeDom
+   * @param targetDom
+   * @param type
+   * @param callback
+   */
   static resizeAble(resizeDom, targetDom, type = 'xy', callback) {
     resizeDom.addEventListener('mousedown', (event) => {
       const target = {
@@ -402,6 +502,26 @@ export default class Terminal {
       window.addEventListener('mouseup', mouseup);
       window.addEventListener('mousemove', mousemove);
     })
+  }
+
+  /**
+   * 限定宽度输出为表格的形式
+   * @param output
+   * @returns {string}
+   */
+  static stdoutTable(output) {
+    // 一行显示五个内容, 一行显示一百个字符, 动态规划一行显示的个数
+    let max = output.reduce((a, b) => b.length > a ? b.length : a, 0);
+    const maxLength = Math.floor(100 / (max + 5));
+    return output.reduce((a, b) => {
+      if (!a[0] || a[a.length - 1].length === maxLength) {
+        a.push([]);
+      }
+      a[a.length - 1].push(b);
+      return a;
+    }, []).map((item) => item.map(it => {
+      return it + new Array(max + 5 - it.length).fill(' ').join('')
+    }).join('')).join('\n');
   }
 
   /**
@@ -455,10 +575,8 @@ class Watcher {
         return this.value;
       },
       set: (value) => {
-        console.log(this, 'this');
         this.value = value;
         this.dom.forEach((item) => {
-          console.log(item, 'item');
           item.dom.innerText = item.render.call(this.target);
         });
       }

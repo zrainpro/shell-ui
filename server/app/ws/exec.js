@@ -1,5 +1,6 @@
 const route = require('koa-route');
 const os = require('os');
+const path = require('path');
 const shell = require('shelljs');
 const createUUID = require('../../../utils/createUUID');
 
@@ -38,6 +39,12 @@ module.exports = function (app) {
         }
         ctx.websocket.send(JSON.stringify({ stdout: params.command, stderr: '', running: true }));
         ctx.websocket.send(JSON.stringify({ stdout: '如果想退出脚本执行其他脚本请先输入 exit 哦', stderr: '', running: true }));
+      } else if (params.type === 'tab') {
+        // 处理 tab 补全
+        shell.cd(params.path);
+        const ls = shell.ls();
+        const list = ls.filter(_ => _.startsWith(params.command));
+        ctx.websocket.send(JSON.stringify({ data: list }));
       } else {
         shell.cd(params.path);
         // path: shell.pwd()
