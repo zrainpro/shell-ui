@@ -102,7 +102,9 @@ release 0.1.13
 - 支持在线交互的 terminal
 - 在线交互 terminal 支持持久化脚本执行
 - 在线交互 terminal 支持拖拽改变高度
-- 在线交互 terminal 添加双击全屏展示
+- 在线交互 terminal 添加双击标题全屏展示
+- 在线交互 terminal 支持 tab 补全
+- 在线交互 terminal 支持输入历史
 - js 脚本支持引入依赖
-- 优化包大小, 从 12.3mb 减少到 2.1mb
+- 优化包大小, 从 12.3mb 减少到 1.2mb
 
