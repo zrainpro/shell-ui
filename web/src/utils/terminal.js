@@ -151,6 +151,7 @@ export default class Terminal {
               // 空内容直接返回
               if (!command) {
                 this.monaco.setValue(this.log);
+                this.monaco.scrollTo(1000000);
                 return;
               }
               // 保存输入历史
