@@ -8,7 +8,7 @@ npm i -g shell-ui
 ```shell script
 shell -p 4000 # 在 4000 端口启动可视化操作界面, 端口被占用会自增端口
 ```
-然后打开浏览器, 输入 localhost:3000 即可管理脚本, 支持创建 nodeJS, shell, Python, Java, Go 脚本.
+然后打开浏览器, 输入 localhost:3000 即可管理脚本, 支持创建 nodeJS, shell, Python, Java, Go , zx(使用 js 写 shell) 脚本.
 
 ## 命令行操作
 ### shell ls 罗列可执行指令 
