@@ -35,14 +35,14 @@
     </div>
     <!-- 底部 command -->
     <div class="command-box">
-      <command />
+      <terminal :ref="el => terminal = el" />
     </div>
   </div>
 </template>
 <script>
   import { reactive, onMounted } from 'vue';
   import { BlockOutlined, CodeOutlined, SettingOutlined, UnorderedListOutlined } from '@ant-design/icons-vue';
-  import Command from './components/command';
+  import Terminal from './components/terminal';
 
   export default {
     components: {
@@ -50,7 +50,7 @@
       CodeOutlined,
       SettingOutlined,
       UnorderedListOutlined,
-      Command
+      Terminal
     },
     setup() {
       // 声明菜单数据
@@ -75,7 +75,8 @@
 
       return {
         menu,
-        state
+        state,
+        terminal: null
       }
     },
     methods: {

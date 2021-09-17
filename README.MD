@@ -94,17 +94,9 @@ shell clear
 ```
 
 ### 发布记录
-release 0.1.13
-- 修复升级后初次运行指令安装更新依赖失败
-- 修复首页无法打开找不到问题
-- 修复指令切换到 zx 提示脚本不存在
-- 支持 zx 使用 js 来写脚本
-- 支持在线交互的 terminal
-- 在线交互 terminal 支持持久化脚本执行
-- 在线交互 terminal 支持拖拽改变高度
-- 在线交互 terminal 添加双击标题全屏展示
-- 在线交互 terminal 支持 tab 补全
-- 在线交互 terminal 支持输入历史
-- js 脚本支持引入依赖
-- 优化包大小, 从 12.3mb 减少到 1.2mb
+release 0.1.14
+- 界面支持按钮直接运行指令
+- terminal 支持 vim 编辑文本
+- terminal tab 补全逻辑优化
+- terminal 输入自动聚焦逻辑优化
 

@@ -58,6 +58,7 @@
         </template>
         <template #operation="{ record }">
           <!-- 自身脚本禁止修改删除 -->
+          <a-button type="link" @click="execShell(record)">执行</a-button>
           <a-button v-if="record.command !== 'shell' && record.parent !== 'shell'" type="link" @click="editShell(record)">编辑</a-button>
           <a-button type="link" @click="deleteShell(record)">删除</a-button>
         </template>
@@ -147,6 +148,10 @@
             });
           }
         })
+      },
+      // 执行脚本
+      execShell(command) {
+        this.$root.terminal && this.$root.terminal.eval(`${command.parent || ''} ${command.command}`);
       },
       // 添加 shell 脚本
       addShell() {

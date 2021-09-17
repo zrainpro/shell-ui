@@ -35,7 +35,7 @@
       //     this.username = result.data.username;
       //   }
       // }
-      new Terminal({
+      this.terminal = new Terminal({
         el: this.$refs.command,
         homedir: this.homedir,
         username: this.username,
@@ -87,6 +87,10 @@
         this.ws.send(JSON.stringify({ command: value, path, uuid: this.uuid, type }));
         this.callback = callback;
         this.type = type;
+      },
+      eval(command) {
+        this.terminal.showLog();
+        this.terminal.eval(command);
       }
     }
   }

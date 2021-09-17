@@ -13,7 +13,7 @@ export default class Terminal {
   logTemp = ''; // 临时日志, 用于非永久显示的日志
   logDom; // log 日志窗口的 dom
   inputDom;
-  logHeight = 180; // log 日志窗口高度
+  logHeight = 300; // log 日志窗口高度
   path = ''; // 路径管理, 主页路径地址由外部传入, 外部不传默认从 / 根路径执行
   username = ''; // 系统用户
   running = false; // 是否有进程在运行中, 有进程在运行中不显示 用户 路径的等信息
@@ -55,7 +55,23 @@ export default class Terminal {
     this.logDom = Terminal.createElement({
       attrs: [['class', 'zr-terminal-log'], ['style', `height: ${this.logHeight}px;display: none;`]],
       events: {
-        keydown: () => this.inputDom.focus()
+        keydown: (event) => {
+          // 活跃的元素不是只读的
+          // 直接输入类型的按下 input focus, 组合键不 focus, 65 - 90 48-57 96 - 107
+          // 组合按键先记录组合键值, 标记不会触发 focus
+          if (document.activeElement && document.activeElement.getAttribute('readonly') !== null) {
+            const c = event.keyCode;
+            if ((c > 47 && c < 58) || (c > 64 && c < 90) || (c > 95 && c < 108)) {
+              if (this.logDom.lastPassKeyCode === undefined) {
+                this.inputDom.focus();
+                this.logDom.lastPassKeyCode = undefined;
+              }
+            } else {
+              this.logDom.lastPassKeyCode = c;
+              setTimeout(() => this.logDom.lastPassKeyCode = undefined, 2000);
+            }
+          }
+        }
       },
       child: [
         {
@@ -77,7 +93,7 @@ export default class Terminal {
                   child: `${this.icon.close}`,
                   events: {
                     click: () => {
-                      Terminal.updateElement({ dom: this.logDom, attrs: [['style', 'display: none']] })
+                      this.showLog(false);
                     }
                   }
                 }
@@ -145,34 +161,11 @@ export default class Terminal {
             enter: async (event) => {
               const command = event.target.value.trim(); // 去除前后空格并拿到指令
               event.target.value = '';
-              this.logTemp = ''; // 把临时日志清空
-
-              this.log && (this.log += '\n');
-              // 空内容直接返回
-              if (!command) {
-                this.monaco.setValue(this.log);
-                this.monaco.scrollTo(1000000);
-                return;
-              }
-              // 保存输入历史
-              if (this.history.length > 100) {
-                this.history.pop();
-              }
-              this.history.unshift(command);
-              this.historyIndex = 0;
-              // 打印命令
-              if (!this.running) {
-                this.log += `${this.username}@${this.path}% ${new Date().toLocaleString()} %  ${command}\n`; // 将输入指令加到日志里面
-                this.monaco.setValue(this.log);
-                this.monaco.scrollTo(1000000);
-              }
-
-              // 解释执行 command
-              this.detailCommand(command);
+              this.eval(command);
             },
             click: () => {
               // 展示 log 日志
-              Terminal.updateElement({ dom: this.logDom, attrs: [['style', 'display: block']] });
+              this.showLog();
             },
             up: (event) => {
               // 历史输入内容
@@ -238,6 +231,8 @@ export default class Terminal {
         this.inputDom.value = command.replace(p, '') + result[0];
         this.monaco.setValue(this.log);
       } else {
+        // 补全已匹配到的最大值
+        this.inputDom.value = command.replace(p, Terminal.getBestMatch(result));
         this.logTemp = Terminal.stdoutTable(result);
         this.monaco.setValue(`${this.log}\n为您匹配到如下结果:\n${this.logTemp}`);
         this.monaco.scrollTo(1000000);
@@ -304,6 +299,13 @@ export default class Terminal {
   }
 
   /**
+   * 展示命令框
+   */
+  showLog(show = true) {
+    Terminal.updateElement({ dom: this.logDom, attrs: [['style', show ? 'display: block' : 'display: none']] });
+  }
+
+  /**
    * 执行 command
    * @param args
    * @returns {Promise<*|string>}
@@ -311,6 +313,36 @@ export default class Terminal {
   exec(...args) {
     this.execFunc && this.execFunc.call(this, ...args);
     // return Promise.resolve(this.execFunc ? this.execFunc.call(this, ...args) : '');
+  }
+
+  /**
+   * 执行外部传入的命令
+   */
+  eval(command) {
+    this.logTemp = ''; // 把临时日志清空
+
+    this.log && (this.log += '\n');
+    // 空内容直接返回
+    if (!command) {
+      this.monaco.setValue(this.log);
+      this.monaco.scrollTo(1000000);
+      return;
+    }
+    // 保存输入历史
+    if (this.history.length > 100) {
+      this.history.pop();
+    }
+    this.history.unshift(command);
+    this.historyIndex = 0;
+    // 打印命令
+    if (!this.running) {
+      this.log += `${this.username}@${this.path}% ${new Date().toLocaleString()} %  ${command}\n`; // 将输入指令加到日志里面
+      this.monaco.setValue(this.log);
+      this.monaco.scrollTo(1000000);
+    }
+
+    // 解释执行 command
+    this.detailCommand(command);
   }
 
   /**
@@ -523,6 +555,30 @@ export default class Terminal {
     }, []).map((item) => item.map(it => {
       return it + new Array(max + 5 - it.length).fill(' ').join('')
     }).join('')).join('\n');
+  }
+
+  /**
+   * 获取到匹配的最大相同内容
+   * @param arr
+   */
+  static getBestMatch(arr) {
+    // 先找到最小长度的作为基准, 依次删除最后一个字符, 判断其他是不是都 includes 这个基准字符, 直到找到全部包含的
+    let base = arr.reduce((a, b) => a.length < b.length ? a : b, arr[0])
+    let allIncludes = false;
+    while (!allIncludes) {
+      let find = true;
+      for (const item of arr) {
+        if (!item.includes(base)) {
+          find = false;
+          break;
+        }
+      }
+      if (!find) {
+        base = base.substring(0, base.length - 1);
+      }
+      allIncludes = find;
+    }
+    return base;
   }
 
   /**
