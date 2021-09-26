@@ -96,7 +96,8 @@ shell clear
 ### 发布记录
 release 0.1.14
 - 界面支持按钮直接运行指令
-- terminal 支持 vim 编辑文本
+- terminal 支持 vim 编辑文本 todo
 - terminal tab 补全逻辑优化
 - terminal 输入自动聚焦逻辑优化
+- 修复更改子指令导致子指令显示到了根指令的位置
 

@@ -143,6 +143,7 @@ async function editInstruct({ _this, params }) {
                 return { error: `您选择的父指令 "${data.parent}" 似乎不存在呢, 是不是那个小伙伴给删除了呢...` };
             }
             parentCommand.children.push({
+                parent: data.parent,
                 command: data.command,
                 alias: data.alias,
                 description: data.description || '',
