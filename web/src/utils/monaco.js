@@ -92,6 +92,13 @@ export default class Monaco {
   }
 
   /**
+   * 更新选项
+   */
+  updateOptions(options) {
+    this.monaco.setOptions(options);
+  }
+
+  /**
    * 内容滚动到指定位置
    * @param value
    */

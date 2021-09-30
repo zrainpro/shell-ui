@@ -15,7 +15,7 @@ class Edit extends Base {
    */
   async create (ctx, next) {
     const params = ctx.request.body;
-    const result = utils.createInstruct({ _this: this, params });
+    const result = await utils.createInstruct({ _this: this, params });
     if (result.error) {
       ctx.throw(result.error);
     }

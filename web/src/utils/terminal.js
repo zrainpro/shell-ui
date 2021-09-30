@@ -4,6 +4,8 @@
 
 import Monaco from './monaco';
 
+const store = new Map();
+
 // todo 使用响应式的方式动态改变 dom 绑定的变量值
 export default class Terminal {
   count = 0;
@@ -11,12 +13,15 @@ export default class Terminal {
   monaco; // monaco editor 实例
   log = ''; // 日志
   logTemp = ''; // 临时日志, 用于非永久显示的日志
+  logback = ''; // 日志的备份, 用于 vim 等需要暂时隐藏日志内容的
   logDom; // log 日志窗口的 dom
   inputDom;
   logHeight = 300; // log 日志窗口高度
   path = ''; // 路径管理, 主页路径地址由外部传入, 外部不传默认从 / 根路径执行
   username = ''; // 系统用户
   running = false; // 是否有进程在运行中, 有进程在运行中不显示 用户 路径的等信息
+  readonly = true; // 是否是只读状态 - 只控制是否可编辑
+  editable = false; // 是否可编辑状态 - 不控制编辑器是否可编辑,但是标记当前是否还是编辑状态, 用于不可编辑时的编辑指令
   history = []; // 输入历史
   historyIndex = 0; // 输入历史下标
   constructor(props) {
@@ -57,11 +62,16 @@ export default class Terminal {
       events: {
         keydown: (event) => {
           // 活跃的元素不是只读的
-          // 直接输入类型的按下 input focus, 组合键不 focus, 65 - 90 48-57 96 - 107
+          // 直接输入类型的按下 input focus, 组合键不 focus, 65 - 90 48-57 96 - 107 16[shift]
           // 组合按键先记录组合键值, 标记不会触发 focus
+          const c = event.keyCode;
+          // esc 键
+          if (c === 27 && this.editable) {
+            this.setReadOnly(true); // 设置只读
+          }
+          if (!this.readonly) return; // 可编辑状态不设置 input 的 focus
           if (document.activeElement && document.activeElement.getAttribute('readonly') !== null) {
-            const c = event.keyCode;
-            if ((c > 47 && c < 58) || (c > 64 && c < 90) || (c > 95 && c < 108)) {
+            if ((c > 47 && c < 58) || (c > 64 && c < 90) || (c > 95 && c < 108) || c === 16) {
               if (this.logDom.lastPassKeyCode === undefined) {
                 this.inputDom.focus();
                 this.logDom.lastPassKeyCode = undefined;
@@ -130,12 +140,15 @@ export default class Terminal {
           language: 'systemverilog',
           ...this.monacoOptions,
           value: this.log,
-          readOnly: true,
+          readOnly: this.readonly,
           domReadOnly: true,
           contextmenu: true, // 禁用右键菜单
           renderFinalNewline: false, // 末尾不渲染新的一行
           scrollBeyondLastLine: false, // 不能滚动到最后一行之外
           automaticLayout: true // 自动布局 , 会耗损性能
+        },
+        change: (value) => {
+          this.log = value; // 写入模式下同步写入的内容
         }
       });
     });
@@ -223,8 +236,7 @@ export default class Terminal {
     this.exec(p, Terminal.detailPath(this.path, dir), (result) => {
       if (!result.length) {
         this.logTemp = '';
-        this.monaco.setValue(`${this.log}\n抱歉没有匹配到结果呢`);
-        this.monaco.scrollTo(1000000);
+        this.setLogValue(`${this.log}\n抱歉没有匹配到结果呢`)
         return
       }
       if (result.length === 1) {
@@ -234,8 +246,7 @@ export default class Terminal {
         // 补全已匹配到的最大值
         this.inputDom.value = command.replace(p, Terminal.getBestMatch(result));
         this.logTemp = Terminal.stdoutTable(result);
-        this.monaco.setValue(`${this.log}\n为您匹配到如下结果:\n${this.logTemp}`);
-        this.monaco.scrollTo(1000000);
+        this.setLogValue(`${this.log}\n为您匹配到如下结果:\n${this.logTemp}`)
       }
     }, 'tab')
   }
@@ -243,26 +254,37 @@ export default class Terminal {
   /**
    * 解释执行命令, 集成内部执行与外部执行
    * @param command
+   * @param type
    */
   detailCommand(command) {
-    const needContinue = this.detailCommandBefore(command);
-    if (needContinue) {
+    const newCommand = this.detailCommandBefore(command);
+    if (newCommand) {
       let once = true;
-      this.exec(command, this.path, (result) => {
+      const type = typeof newCommand === 'string' ? 'normal' : newCommand.type;
+      this.exec(type === 'normal' ? `${newCommand}\n` : newCommand, this.path, (result) => {
         if (!result.error && once) {
           once = false;
-          this.detailCommandAfter(command);
+          this.detailCommandAfter(newCommand);
+        }
+        // 编辑状态并且出错了, 退出编辑状态, 展示错误
+        if (this.editable && result.error) {
+          this.log = this.logback;
+          this.logback = '';
+          store.delete('otherInstruct');
+          this.setReadOnly(true, false);
+          this.setLogValue(this.log);
+          const instruct = store.has('otherInstruct') ? store.get('otherInstruct') : {};
+          result.error = result.error.replace(instruct.replaced, instruct.instruct);
         }
         // 对于 ls 罗列进行特殊处理, 让其不换行
-        if (command.toLowerCase() === 'ls' || command.startsWith('ls ')) {
+        if (typeof newCommand === 'string' && (newCommand.toLowerCase() === 'ls' || newCommand.startsWith('ls '))) {
           // 一行显示五个内容, 一行显示一百个字符, 动态规划一行显示的个数
           result.output = Terminal.stdoutTable((result.output || '').split('\n'));
         }
         this.log += (result.error || result.output);
         this.running = result.running;
-        this.monaco.setValue(this.log);
-        this.monaco.scrollTo(1000000);
-      }, 'normal');
+        this.setLogValue(this.log)
+      }, type);
     }
   }
 
@@ -272,17 +294,50 @@ export default class Terminal {
    */
   detailCommandBefore(command) {
     // 处理 clear 逻辑
-    if (command === 'clear') {
+    if (['clear', 'cls'].includes(command)) {
       this.clearLog()
       return false;
     }
-    return true
+    const [instruct, ...other] = command.split(' ');
+    // 处理 vim vi 等逻辑 TODO 服务端实现 vim 保存逻辑
+    if (['vim', 'vi'].includes(instruct)) {
+      this.logback = this.log;
+      this.clearLog();
+      this.setReadOnly(false, true); // 标记可编辑状态
+      store.set('otherInstruct', { instruct, other, replaced: 'cat' }); // 将 其余指令信息保存起来, 下面退出要用到
+      return ['cat', ...other].join(' ');
+    }
+    // 处理 vim vi 后续输入逻辑
+    if (this.editable) {
+      if (instruct.startsWith(':q')) {
+        // 只退出不保存
+        this.log = this.logback;
+        this.logback = '';
+        store.delete('otherInstruct');
+        this.setReadOnly(true, false);
+        this.setLogValue(this.log);
+        return false
+      } else if (instruct.startsWith(':wq')) {
+        const value = this.log;
+        const path = store.has('otherInstruct') ? store.get('otherInstruct').other : [];
+        store.delete('otherInstruct');
+        this.log = this.logback;
+        this.logback = '';
+        this.log += '\n 即将为您保存文件';
+        this.setReadOnly(true, false);
+        this.setLogValue(this.log);
+        return { value, path: path.join(' '), type: 'command_save' }; // 交由 serve 实现
+        // return ['cat > ', ...path, `<<EOF ${value} EOF`].join(' ');
+      }
+    }
+    return command;
   }
   /**
    * 内部集成的一些 command 解释器, 后置, 外部解释器解释完了在执行
    * @param command
    */
   detailCommandAfter(command) {
+    if (typeof command !== 'string') return;
     // 处理 cd 命令, 同步更新自身 path
     if (command.startsWith('cd')) {
       const path = command.replace('cd', '').trim();
@@ -296,6 +351,27 @@ export default class Terminal {
   clearLog() {
     this.log = '';
     this.monaco.setValue(this.log);
+  }
+
+  /**
+   * 设置是否可编辑
+   * @param readonly 设置只读状态
+   * @param editable 是否可编辑
+   */
+  setReadOnly(readonly, editable = this.editable) {
+    this.editable = editable;
+    this.readonly = readonly;
+    this.monaco.instance.updateOptions({ readOnly: readonly });
+  }
+
+  /**
+   * 设置日志的内容并滚动到最后面
+   * @param value 日志的内容
+   * @param scrollToEnd 是否滚动到最下面
+   */
+  setLogValue(value, scrollToEnd = true) {
+    this.monaco.setValue(value);
+    scrollToEnd && this.monaco.scrollTo(1000000);
   }
 
   /**
@@ -324,21 +400,19 @@ export default class Terminal {
     this.log && (this.log += '\n');
     // 空内容直接返回
     if (!command) {
-      this.monaco.setValue(this.log);
-      this.monaco.scrollTo(1000000);
+      this.setLogValue(this.log);
       return;
     }
-    // 保存输入历史
+    // 保存输入历史 todo 编辑模式下 :q :wq 不应该记录在历史中
     if (this.history.length > 100) {
       this.history.pop();
     }
     this.history.unshift(command);
     this.historyIndex = 0;
-    // 打印命令
-    if (!this.running) {
+    // 打印命令, 持续性脚本以及编辑状态的不追加
+    if (!this.running && !this.editable) {
       this.log += `${this.username}@${this.path}% ${new Date().toLocaleString()} %  ${command}\n`; // 将输入指令加到日志里面
-      this.monaco.setValue(this.log);
-      this.monaco.scrollTo(1000000);
+      this.setLogValue(this.log);
     }
 
     // 解释执行 command

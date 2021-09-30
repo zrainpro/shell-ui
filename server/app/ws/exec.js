@@ -2,6 +2,7 @@ const route = require('koa-route');
 const os = require('os');
 const path = require('path');
 const shell = require('shelljs');
+const fs = require('fs');
 const createUUID = require('../../../utils/createUUID');
 
 const links = {};
@@ -37,8 +38,18 @@ module.exports = function (app) {
           delete links[params.uuid];
           ctx.websocket.send(JSON.stringify({ stdout: '进程结束成功!', stderr: '' }));
         }
-        ctx.websocket.send(JSON.stringify({ stdout: params.command, stderr: '', running: true }));
-        ctx.websocket.send(JSON.stringify({ stdout: '如果想退出脚本执行其他脚本请先输入 exit 哦', stderr: '', running: true }));
+        links[params.uuid].stdin.write(params.command);
+        // ctx.websocket.send(JSON.stringify({ stdout: params.command, stderr: '', running: true }));
+        // ctx.websocket.send(JSON.stringify({ stdout: '如果想退出脚本执行其他脚本请先输入 exit 哦', stderr: '', running: true }));
+      } else if (params.type === 'command_save') {
+        const value = params.command.value;
+        const pathDetail = params.command.path;
+        fs.writeFileSync(path.resolve(params.path, pathDetail), value);
+        ctx.websocket.send(JSON.stringify({
+          stdout: '\n保存成功',
+          stderr: '',
+          running: false
+        }));
       } else if (params.type === 'tab') {
         // 处理 tab 补全
         shell.cd(params.path);
