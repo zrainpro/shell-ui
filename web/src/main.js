@@ -2,6 +2,7 @@ import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router';
 import Axios from './plugins/axios';
+import './utils/terminal.css';
 
 import {
   Button,

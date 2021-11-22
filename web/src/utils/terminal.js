@@ -37,6 +37,7 @@ export default class Terminal {
     // 设置响应式
     this.reactive('path');
     this.reactive('username');
+    this.reactive('running');
 
     this.init();
   }
@@ -92,14 +93,14 @@ export default class Terminal {
               attrs: [['class', 'zr-inline']],
               child: [
                 {
-                  attrs: [['class', 'zr-btn zr-tooltip'], ['title', '清空日志'], ['style', 'height: 22px;width: 22px']],
+                  attrs: [['class', 'zr-btn zr-tooltip'], ['tips', '清空日志'], ['style', 'height: 22px;width: 22px']],
                   child: `${this.icon.delete}`,
                   events: {
                     click: this.clearLog.bind(this)
                   }
                 },
                 {
-                  attrs: [['class', 'zr-btn zr-tooltip'], ['title', '关闭日志窗口'], ['style', 'height: 22px;width: 22px']],
+                  attrs: [['class', 'zr-btn zr-tooltip'], ['tips', '关闭日志窗口'], ['style', 'height: 22px;width: 22px']],
                   child: `${this.icon.close}`,
                   events: {
                     click: () => {
@@ -164,8 +165,11 @@ export default class Terminal {
       attrs: [['class', 'zr-terminal-input']],
       child: [
         {
-          bind: '${this.username}@${this.path}%',
-          attrs: [['class', 'zr-terminal-path']]
+          bind: "{ innerText: `${this.username}@${this.path}%` }",
+          attrs: [['class', 'zr-terminal-path zr-tooltip'], ['tips', '可以输入 exit 来结束运行中的程序哦~']]
+        },
+        {
+          bind: "{ attrs: { class: `zr-status ${this.running ? 'zr-running' : ''}` } }"
         },
         {
           name: 'input',
@@ -210,7 +214,7 @@ export default class Terminal {
           }
         },
         {
-          attrs: [['class', 'zr-btn zr-tooltip'], ['title', '反馈 bug'], ['style', 'height: 20px;width: 30px;padding: 0 5px']],
+          attrs: [['class', 'zr-btn zr-tooltip'], ['tips', '反馈 bug'], ['style', 'height: 20px;width: 30px;padding: 0 5px']],
           child: this.icon.bug,
           events: {
             click() {
@@ -460,11 +464,11 @@ export default class Terminal {
     if (bind) {
       thisArg._reactive = {
         dom: temp,
-        render: new Function(`return \`${bind}\``)
+        render: new Function(`return ${bind}`)
       }; // 将此时的 dom 元素以及更新函数记录用于 reative
-      const text = thisArg._reactive.render.call(thisArg);
+      console.log(`return ${bind}`, thisArg._reactive.render.call(thisArg));
+      Watcher.setDom(thisArg._reactive.render.call(thisArg), temp); // 设置初始值
       thisArg._reactive = null;
-      temp.innerText = text;
     }
 
     // 添加子节点
@@ -708,10 +712,23 @@ class Watcher {
       set: (value) => {
         this.value = value;
         this.dom.forEach((item) => {
-          item.dom.innerText = item.render.call(this.target);
+          Watcher.setDom(item.render.call(this.target), item.dom);
         });
       }
     })
+  }
+
+  static setDom(source, dom) {
+    if (typeof source !== 'object') return;
+    if (source instanceof Array) return;
+    if (source === null) return;
+    Object.keys(source).forEach(key => {
+      if (key === 'attrs') {
+        Object.keys(source[key]).forEach(attrKey => dom.setAttribute(attrKey, source[key][attrKey]));
+      } else {
+        dom[key] = source[key];
+      }
+    });
   }
 }
 

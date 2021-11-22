@@ -33,12 +33,13 @@ module.exports = function (app) {
 
       // 一个客户端只允许起最多一个进程
       if (links[params.uuid]) {
-        if (params.command === 'exit') {
+        if (new RegExp('^exit').test(params.command)) {
           links[params.uuid].kill();
           delete links[params.uuid];
           ctx.websocket.send(JSON.stringify({ stdout: '进程结束成功!', stderr: '' }));
+        } else {
+          links[params.uuid].stdin.write(params.command);
         }
-        links[params.uuid].stdin.write(params.command);
         // ctx.websocket.send(JSON.stringify({ stdout: params.command, stderr: '', running: true }));
         // ctx.websocket.send(JSON.stringify({ stdout: '如果想退出脚本执行其他脚本请先输入 exit 哦', stderr: '', running: true }));
       } else if (params.type === 'command_save') {
@@ -53,7 +54,7 @@ module.exports = function (app) {
       } else if (params.type === 'tab') {
         // 处理 tab 补全
         shell.cd(params.path);
-        const ls = shell.ls();
+        const ls = shell.ls('-A');
         const list = ls.filter(_ => _.startsWith(params.command));
         ctx.websocket.send(JSON.stringify({ data: list }));
       } else {
