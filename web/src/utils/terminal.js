@@ -149,7 +149,9 @@ export default class Terminal {
           automaticLayout: true // 自动布局 , 会耗损性能
         },
         change: (value) => {
-          this.log = value; // 写入模式下同步写入的内容
+          if (!this.readonly) {
+            this.log = value; // 写入模式下同步写入的内容
+          }
         }
       });
     });

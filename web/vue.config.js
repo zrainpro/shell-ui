@@ -19,13 +19,13 @@ module.exports = {
   devServer: {
     proxy: {
       '/api': {
-        target: 'http://[::1]:3000',
+        target: 'http://[::1]:3001',
         changeOrigin: true,
         pathRewrite: {
         }
       },
       '/terminal': {
-        target: 'http://[::1]:3000',
+        target: 'http://[::1]:3001',
         pathRewrite: {
         },
         ws: true
