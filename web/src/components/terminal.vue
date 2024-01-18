@@ -16,7 +16,7 @@
   import Terminal from '../utils/terminal';
 
   export default {
-    name: "command",
+    name: "my-command",
     data() {
       return {
         homedir: '',
@@ -70,7 +70,8 @@
                 this.callback && this.callback({
                   output: result.stdout,
                   error: result.stderr,
-                  running: result.running
+                  running: result.running,
+                  ...result,
                 });
               }
             } catch (e) {

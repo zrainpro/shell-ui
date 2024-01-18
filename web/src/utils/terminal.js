@@ -27,6 +27,7 @@ export default class Terminal {
   constructor(props) {
     this.monacoOptions = props.monacoOptions; // monaco 的选项
     this.el = props.el;
+    this.homedir = props.homedir || '/';
     this.path = props.homedir || '/';
     this.username = props.username || 'guest';
     props.log && (this.log += `${props.log}\n`);
@@ -233,20 +234,19 @@ export default class Terminal {
    * @param command
    */
   detailTab(command) {
-    // detailPath
     let commandPath = command.split(/ +/).slice(-1)[0];
     // 拿出未写全的地址
     let p = commandPath.match(/([a-z]|[A-Z]|[_]|[-]|[1-9]|[.])+$/);
     p = p && p.length ? p[0] : '';
-    const dir = commandPath.replace(p, '');
-    this.exec(p, Terminal.detailPath(this.path, dir), (result) => {
+    const dir = commandPath.replace(new RegExp(`${p}$`), '');
+    this.exec(p, this.detailPath(this.path, dir), (result) => {
       if (!result.length) {
         this.logTemp = '';
         this.setLogValue(`${this.log}\n抱歉没有匹配到结果呢`)
         return
       }
       if (result.length === 1) {
-        this.inputDom.value = command.replace(p, '') + result[0];
+        this.inputDom.value = command.replace(new RegExp(`${p}$`), '') + result[0];
         this.monaco.setValue(this.log);
       } else {
         // 补全已匹配到的最大值
@@ -270,7 +270,7 @@ export default class Terminal {
       this.exec(type === 'normal' ? `${newCommand}\n` : newCommand, this.path, (result) => {
         if (!result.error && once) {
           once = false;
-          this.detailCommandAfter(newCommand);
+          this.detailCommandAfter(newCommand, result);
         }
         // 编辑状态并且出错了, 退出编辑状态, 展示错误
         if (this.editable && result.error) {
@@ -341,13 +341,13 @@ export default class Terminal {
   /**
    * 内部集成的一些 command 解释器, 后置, 外部解释器解释完了在执行
    * @param command
+   * @param result 执行结果
    */
-  detailCommandAfter(command) {
+  detailCommandAfter(command, result) {
     if (typeof command !== 'string') return;
     // 处理 cd 命令, 同步更新自身 path
     if (command.startsWith('cd')) {
-      const path = command.replace('cd', '').trim();
-      this.path = Terminal.detailPath(this.path, path);
+      this.path = result.currentPath;
     }
   }
 
@@ -428,15 +428,17 @@ export default class Terminal {
   /**
    * 路径处理, 类似 node 的 path
    */
-  static detailPath(source, dir) {
+  detailPath(source, dir) {
     // 分别处理成地址栈
-    const s = source.split(/\\|\//);
+    let s = source.split(/\\|\//);
     const d = dir.split(/\\|\//);
     for (let path of d) {
       if (path === '..') {
         s.pop();
       } else if (path === '.') {
         continue
+      } else if (path === '~') {
+        s = [this.homedir];
       } else {
         s.push(path);
       }
@@ -468,7 +470,7 @@ export default class Terminal {
         dom: temp,
         render: new Function(`return ${bind}`)
       }; // 将此时的 dom 元素以及更新函数记录用于 reative
-      console.log(`return ${bind}`, thisArg._reactive.render.call(thisArg));
+      // console.log(`return ${bind}`, thisArg._reactive.render.call(thisArg));
       Watcher.setDom(thisArg._reactive.render.call(thisArg), temp); // 设置初始值
       thisArg._reactive = null;
     }

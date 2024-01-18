@@ -6,10 +6,11 @@
             v-model:value="search.keywords"
             size="large"
             placeholder="搜索指令"
-            style="width: 300px"
+            style="width: 300px;margin-right: 20px"
+            enter-button
             @search="onSearch"
         />
-        <Label name="脚本类型">
+        <My-Label name="脚本类型">
           <a-select
               v-model:value="search.type"
               style="width: 200px"
@@ -19,8 +20,8 @@
             <a-select-option value="all">全部</a-select-option>
             <a-select-option v-for="item in state.supportScript" :key="item.value" :value="item.value">{{item.label}}</a-select-option>
           </a-select>
-        </Label>
-        <Label name="状态">
+        </My-Label>
+        <My-Label name="状态">
           <a-select
               v-model:value="search.enable"
               style="width: 200px"
@@ -31,7 +32,7 @@
             <a-select-option :value="1">启用</a-select-option>
             <a-select-option :value="2">禁用</a-select-option>
           </a-select>
-        </Label>
+        </My-Label>
       </div>
       <div class="button-group" style="justify-content: flex-end">
         <a-button type="primary" ghost @click="addShell">新增</a-button>
@@ -47,23 +48,28 @@
                row-key="id"
                :indentSize="5"
                :row-selection="rowSelection">
-        <template #enable="{ record }">
-          <!-- 自身脚本禁止禁用 -->
-          <a-switch checked-children="启用"
-                    un-checked-children="禁用"
-                    v-if="record.command !== 'shell' && record.parent !== 'shell'"
-                    v-model:checked="record.enable"
-                    @change="changeChecked(record, $event)"
-          />
-        </template>
-        <template #operation="{ record }">
-          <!-- 自身脚本禁止修改删除 -->
-          <a-button type="link" @click="execShell(record)">执行</a-button>
-          <a-button v-if="record.command !== 'shell' && record.parent !== 'shell'" type="link" @click="editShell(record)">编辑</a-button>
-          <a-button type="link" @click="deleteShell(record)">删除</a-button>
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.key === 'enable'">
+            <!-- 自身脚本禁止禁用 -->
+            <a-switch checked-children="启用"
+                      un-checked-children="禁用"
+                      v-if="record.command !== 'shell' && record.parent !== 'shell'"
+                      v-model:checked="record.enable"
+                      @change="changeChecked(record, $event)"
+            />
+          </template>
+          <template v-else-if="column.key === 'operation'">
+            <!-- 自身脚本禁止修改删除 -->
+            <a-button type="link" @click="execShell(record)">执行</a-button>
+            <a-button v-if="record.command !== 'shell' && record.parent !== 'shell'" type="link" @click="editShell(record)">编辑</a-button>
+            <a-button type="link" @click="showDeleteShell(record)">删除</a-button>
+          </template>
         </template>
       </a-table>
     </div>
+    <a-modal v-model:open="modalData.show" :title="modalData.title" @ok="deleteShell">
+      <p>{{ modalData.content }}</p>
+    </a-modal>
   </div>
 </template>
 
@@ -73,9 +79,9 @@
   import Label from '../../components/Label';
 
   export default {
-    name: 'Home',
+    name: 'mannage-Home',
     components: {
-      Label
+      MyLabel: Label
     },
     setup() {
       // 表格展示的信息
@@ -84,10 +90,10 @@
           { title: 'command', dataIndex: 'command', key: 'command', width: 140, fixed: 'left', align: 'left', ellipsis: true },
           { title: '简写', dataIndex: 'alias', key: 'alias', width: 80 },
           { title: '脚本类型', dataIndex: 'type', key: 'type', width: 80 },
-          { title: '是否启用', dataIndex: 'enable', key: 'enable', width: 100, slots: { customRender: 'enable' } },
+          { title: '是否启用', dataIndex: 'enable', key: 'enable', width: 100 },
           { title: '简介', dataIndex: 'description', key: 'description', width: 120, ellipsis: true },
           { title: '脚本', dataIndex: 'shell', key: 'shell', width: 240, ellipsis: true },
-          { title: '操作', dataIndex: 'id', key: 'id', width: 130, fixed: 'right', slots: { customRender: 'operation' } }
+          { title: '操作', dataIndex: 'operation', key: 'operation', width: 130, fixed: 'right' }
         ],
         data: []
       })
@@ -120,11 +126,20 @@
         enable: 'all'
       })
 
+      // 弹窗相关
+      const modalData = reactive({
+        show: false,
+        title: '',
+        content: '',
+        item: null
+      });
+
       return {
         table,
         rowSelection,
         state,
-        search
+        search,
+        modalData
       }
     },
     mounted() {
@@ -162,20 +177,19 @@
         this.$router.push(`/manage/edit/${item.id}`)
       },
       // 删除脚本
-      deleteShell(item) {
-        this.$confirm({
-          title: item.parent ? '该操作不可恢复,您确定要删除脚本嘛?' : '您删除的是根脚本,会连同子脚本一同删除!!',
-          content: item.parent ? '如果只是暂时不用可以禁用脚本哦' : '子脚本也会被一同删除且不可恢复哦, 请谨慎操作!!!',
-          onOk: () => {
-            return new Promise(resolve => {
-              this.apiPost(`/api/delete/${item.id}`).then(res => {
-                if (res.code === 200) {
-                  this.$message.success('删除成功!');
-                  this.onSearch(); // 重新请求数据
-                  resolve();
-                }
-              })
-            })
+      showDeleteShell(item) {
+        this.modalData.show = true;
+        this.modalData.title = item.parent ? '该操作不可恢复,您确定要删除脚本嘛?' : '您删除的是根脚本,会连同子脚本一同删除!!';
+        this.modalData.content = item.parent ? '如果只是暂时不用可以禁用脚本哦' : '子脚本也会被一同删除且不可恢复哦, 请谨慎操作!!!';
+        this.modalData.item = item;
+      },
+      // 删除脚本
+      deleteShell() {
+        this.apiPost(`/api/delete/${this.modalData.item.id}`).then(res => {
+          if (res.code === 200) {
+            this.$message.success('删除成功!');
+            this.onSearch(); // 重新请求数据
+            this.modalData.show = false;
           }
         })
       },
@@ -220,6 +234,9 @@
             }
           }).then(res => {
             console.log(res);
+            this.onSearch();
+            // todo 把错误信息给出来
+            this.$message.success('导入成功');
           })
           console.log(file);
         }

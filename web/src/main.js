@@ -15,7 +15,8 @@ import {
   Select,
   Tooltip,
   Modal,
-  Switch
+  Switch,
+  ConfigProvider
 } from 'ant-design-vue';
 // import 'ant-design-vue/dist/antd.css';
 
@@ -30,6 +31,7 @@ createApp(App)
   .use(Tooltip)
   .use(Modal)
   .use(Switch)
+  .use(ConfigProvider)
   .use(Axios)
   .use({
     install(app) {

@@ -1,12 +1,12 @@
 const path = require("path");
 const { deletePackageShell } = require("./package");
-const { rootPath } = require('./config');
+const { homePath } = require('./config');
 
 /**
  * 删除指令
  * @param _this
  * @param params
- * @returns {Promise<{error: string}|{pass: boolean, command: null}>}
+ * @returns {Promise<{error: string}|{pass: boolean, command: string | undefined | null, message: string | undefined}>}
  */
 async function removeInstruct({ _this, params }) {
     const { json, shell } = _this;
@@ -28,7 +28,7 @@ async function removeInstruct({ _this, params }) {
         return false
     });
     if (!command) {
-        return { error: `您要删除的指令 ${command.command} 不存在呢!` }
+        return { pass: true, message: `这个指令早就被删除了` }
     }
     // 删除父脚本的要同时删除子脚本, 删除可执行指令, 删除 package.json 中的值
     if (!command.parent) {
@@ -40,7 +40,7 @@ async function removeInstruct({ _this, params }) {
     } else {
         // 删除子脚本的要同时删除 shell 子脚本文件
         if (command.type === 'shell') {
-            shell.rm('-f', path.resolve(rootPath, `../shell-ui-database/lib/userShell/${command.parent}/${command.command}.sh`));
+            shell.rm('-f', path.resolve(homePath, `./.shell-ui/lib/userShell/${command.parent}/${command.command}.sh`));
         }
         // 删除子脚本数据
         const parent = shellData[command.parent];

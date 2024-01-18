@@ -1,12 +1,12 @@
 <template>
   <div class="editor">
     <div class="controller">
-      <a-button @click="cancel" type="danger" ghost>取消</a-button>
+      <a-button @click="cancel" type="primary">取消</a-button>
       <a-button @click="save" type="primary" ghost>保存</a-button>
-      <a-button @click="runCode" ghost>调试</a-button>
+      <a-button @click="runCode" danger type="primary" ghost>调试</a-button>
     </div>
     <div class="editor-info">
-      <Label name="父级脚本">
+      <My-Label name="父级脚本">
         <a-select
             v-model:value="state.form.parent"
             style="width: 300px"
@@ -17,32 +17,32 @@
           <a-select-option value="root">根级脚本</a-select-option>
           <a-select-option v-for="item in state.shells" :key="item" :value="item">{{item}} 子脚本</a-select-option>
         </a-select>
-      </Label>
-      <Label name="指令名">
+      </My-Label>
+      <My-Label name="指令名">
         <a-input
             v-model:value="state.form.command"
             size="large"
             placeholder="指令名"
             style="width: 300px"
         />
-      </Label>
-      <Label name="指令简写">
+      </My-Label>
+      <My-Label name="指令简写">
         <a-input
             v-model:value="state.form.alias"
             size="large"
             placeholder="指令简写"
             style="width: 300px"
         />
-      </Label>
-      <Label name="指令简介">
+      </My-Label>
+      <My-Label name="指令简介">
         <a-input
             v-model:value="state.form.description"
             size="large"
             placeholder="指令简介"
             style="width: 300px"
         />
-      </Label>
-      <Label name="指令类型">
+      </My-Label>
+      <My-Label name="指令类型">
         <a-select
             v-model:value="state.form.type"
             placeholder="指令类型"
@@ -52,7 +52,7 @@
         >
           <a-select-option v-for="item in state.shellType" :key="item" :value="item">{{item}}</a-select-option>
         </a-select>
-      </Label>
+      </My-Label>
     </div>
     <monaco :lang="state.form.type" v-model:value="state.form.shell" :height="440"></monaco>
   </div>
@@ -65,10 +65,10 @@
   import supportType from '../../../../utils/supportType';
 
   export default {
-    name: "index",
+    name: "manage-edit",
     components: {
       Monaco,
-      Label
+      MyLabel: Label
     },
     setup() {
       const state = reactive({

@@ -1,7 +1,7 @@
 const path = require('path');
-const fs = require('fs');
+const fs = require('../../../../utils/fs');
 const { buildShell } = require('./package');
-const { rootPath } = require('./config');
+const { rootPath, homePath } = require('./config');
 
 /**
  * 启用禁用某个指令
@@ -49,7 +49,7 @@ async function enableInstruct({ _this, params }) {
             if (command.children && command.children.length) {
                 command.children.forEach(item => {
                     if (item.type === 'shell') {
-                        fs.writeFileSync(path.resolve(rootPath, `../shell-ui-database/lib/userShell/${command.command}/${item.command}.sh`), item.shell)
+                        fs.writeFileSync(path.resolve(homePath, `./.shell-ui/lib/userShell/${command.command}/${item.command}.sh`), item.shell)
                     }
                 });
             }

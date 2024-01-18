@@ -7,14 +7,14 @@
 
 <script>
   export default {
-    name: "Label",
+    name: "Label-component",
     props: {
       name: {
         type: String,
         default: ''
       },
       labelWidth: {
-        type: String || Number,
+        type: [String, Number],
         default: 80
       }
     }

@@ -1,4 +1,5 @@
-const fs = require('fs');
+const fs = require('./fs');
+const path = require('path');
 const lodash = require('lodash');
 
 const state = {};

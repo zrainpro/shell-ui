@@ -1,6 +1,6 @@
 'use strict';
 const Koa = require('koa');
-const koaBody = require('koa-body');
+const { koaBody } = require('koa-body');
 const send = require('koa-send');
 const websockify = require('koa-websocket');
 const fs = require('fs');

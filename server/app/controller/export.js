@@ -67,7 +67,7 @@ class Export extends Base {
   async import (ctx, next) {
     // 获取数据流
     const requestFile = ctx.request.files.file;
-    const stream = fs.createReadStream(requestFile.path);
+    const stream = fs.createReadStream(requestFile.filepath);
     // 写入临时文件
     const filePath = path.resolve(__dirname, './import.json');
     if (fs.existsSync(filePath)) {

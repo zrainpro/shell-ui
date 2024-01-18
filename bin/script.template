@@ -7,14 +7,18 @@ const shell = require('shelljs');
 const shellInfo = require(path.resolve(__dirname, '../../json/shell.json'));
 
 let packageInfo = { version: '您还没有安装 shell-ui 呢, 快来执行 npm i -g shell-ui 来安装体验吧' };
-if (fs.existsSync(path.resolve(__dirname, '../../../shell-ui/package.json'))) {
-  packageInfo = require(path.resolve(__dirname, '../../../shell-ui/package.json'));
+shell.which('node', function(err, nodePath) {
+})
+const shellUI = shell.which('shell');
+const shellUIPath = path.resolve(shellUI.stdout, '../lib/node_modules/shell-ui');
+if (shellUI && fs.existsSync(path.resolve(shellUIPath, './package.json'))) {
+  packageInfo = require(path.resolve(shellUIPath, './package.json'));
 }
 
 // 检查是否有更新
 let checkUpdate = null;
-if (fs.existsSync(path.resolve(__dirname, '../../../shell-ui/utils/checkUpdate.js'))) {
-  checkUpdate = require(path.resolve(__dirname, '../../../shell-ui/utils/checkUpdate.js'));
+if (fs.existsSync(path.resolve(shellUIPath, './utils/checkUpdate.js'))) {
+  checkUpdate = require(path.resolve(__dirname, './utils/checkUpdate.js'));
 }
 
 const command = shellInfo.shell[`'{{command}}'`];

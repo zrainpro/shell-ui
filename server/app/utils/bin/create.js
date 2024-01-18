@@ -1,8 +1,8 @@
 // 创建指令
-const fs = require('fs');
+const fs = require('../../../../utils/fs');
 const path = require('path');
 const { buildShell } = require('./package');
-const { fileType, rootPath } = require('./config');
+const { fileType, homePath } = require('./config');
 
 async function createInstruct({ _this, params, useId }) {
     const { json, createUUID, shell } = _this;
@@ -67,7 +67,7 @@ async function createInstruct({ _this, params, useId }) {
         });
         // 如果 脚本类型是 shell 脚本, 创建子脚本的 sh 可执行文件
         if (fileType[data.type]) {
-            fs.writeFileSync(path.resolve(rootPath, `../shell-ui-database/lib/userShell/${parent.command}/${data.command}.${fileType[data.type]}`), data.shell);
+            fs.writeFileSync(path.resolve(homePath, `./.shell-ui/lib/userShell/${parent.command}/${data.command}.${fileType[data.type]}`), data.shell);
         }
         // 设置完数据保存到文件
         json.write();

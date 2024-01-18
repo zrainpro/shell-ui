@@ -94,7 +94,13 @@ shell clear
 ```
 
 ### 发布记录
-release 0.1.15
+release 0.1.16
+- 升级项目依赖
+- 升级monaco editor 到最新版本
+- 修改项目数据地址从 node_modules/shell-ui-database 到 用户目录 .shell-ui 文件夹
 - 修复临时日志变成永久日志的问题
 - 修复在线 terminal 当前目录显示不全问题
+- 修复在线 terminal cd 路径包含简写 如 ~ 时会出错
+- 修复删除指令的 toast 报错
+
 

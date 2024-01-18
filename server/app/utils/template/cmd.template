@@ -14,4 +14,4 @@ IF EXIST "%dp0%\node.exe" (
 SET PATHEXT=%PATHEXT:;.JS;=;%
 )
 
-endLocal & goto #_undefined_# 2>NUL || title %COMSPEC% & "%_prog%"  "%dp0%\node_modules\shell-ui-database\lib\userScript\{{command}}.js" %*
+endLocal & goto #_undefined_# 2>NUL || title %COMSPEC% & "%_prog%"  "%userprofile%\.shell-ui\lib\userScript\{{command}}.js" %*

@@ -2,11 +2,19 @@
 const fs = require('fs');
 const path = require('path');
 const shell = require('shelljs');
+const { homedir } = require('os');
 const JSONDB = require('../../utils/jsonDB');
+const fse = require('fs-extra');
 
 module.exports = function () {
   return new Promise(resolve => {
-    const databasePath = path.resolve(__dirname, '../../../shell-ui-database');
+    // - 默认使用 $home/.shell-ui/shell.json 同时兼容之前的设置
+    const databasePath = path.resolve(homedir(), './.shell-ui');
+    const oldPath = path.resolve(__dirname, '../../../shell-ui-database');
+    if (!fs.existsSync(databasePath) && fs.existsSync(oldPath)) {
+      fse.copySync(oldPath, databasePath);
+      return resolve(0);
+    }
     // 初始化一个本地数据库, 用于存放是否初始化完成, 以及以后相关依赖安装情况
     const json = new JSONDB({
       path: path.resolve(__dirname, '../../status.json')
@@ -14,7 +22,7 @@ module.exports = function () {
     // 创建 shell 数据库初值
     if (!json.get('init')) {
       json.set('init', {
-        packageInit: false, // 是否安装了 shell-ui-database 的依赖
+        packageInit: false, // 是否安装了 .shell-ui 的依赖
       });
       json.write();
     }
@@ -58,7 +66,7 @@ module.exports = function () {
       console.log('项目未初始化完成不要退出哦, 否则可能会无法正常使用哦')
       const currentDir = path.resolve('./');
       shell.cd(databasePath);
-      shell.exec(`npm i ${databasePath} --registry=https://registry.npm.taobao.org`, null, function (code) {
+      shell.exec(`npm i --registry=https://mirrors.cloud.tencent.com/npm/`, null, function (code) {
         shell.cd(currentDir);
         if (code !== 0) {
           shell.echo('初始化失败,请检查网络后重试!');
@@ -71,9 +79,9 @@ module.exports = function () {
           });
           json.write();
         }
-        // 安装完依赖了在 shell-ui-database 中创建一个已经安装完依赖的文件, 所有shell 命令都会先检测这个, 如果没有安装依赖, 会先安装依赖防止报错
+        // 安装完依赖了在 .shell-ui 中创建一个已经安装完依赖的文件, 所有shell 命令都会先检测这个, 如果没有安装依赖, 会先安装依赖防止报错
         const markInit = new JSONDB({
-          path: path.resolve(__dirname, '../../../shell-ui-database/init.json')
+          path: path.resolve(databasePath, './init.json')
         });
         if (!markInit.get('init', false)) {
           markInit.set('init', true);

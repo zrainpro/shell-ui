@@ -1,43 +1,63 @@
 <template>
-  <div id="app" :style="`min-width: ${state.collapsed ? '744px' : '884px'}`">
-    <div class="app-box">
-      <!-- 菜单 -->
-      <div class="menu" :style="`width: ${state.collapsed ? '80px' : '220px'}`">
-        <div class="nav-item" @click.stop="state.collapsed = !state.collapsed">
-          <a-tooltip placement="right">
-            <UnorderedListOutlined />
-          </a-tooltip>
-        </div>
-        <a-menu
-            v-model:selectedKeys="menu.selectedKeys"
-            mode="inline"
-            theme="light"
-            :inline-collapsed="state.collapsed"
-        >
-          <a-menu-item @click="clickMenu(item)" :key="item.path" v-for="item in menu.list">
-            <router-link :to="item.path">
+  <a-config-provider
+      :theme="{
+      token: {
+        colorPrimary: '#00b96b',
+        colorLink: '#42b983',
+        colorSuccess: '#00b96b',
+        colorWarning: '#ff9900',
+        colorError: '#ff4d4f',
+        colorInfo: '#00b96b',
+        colorText: '#333',
+        colorTextSecondary: '#999',
+        colorTextInverse: '#fff',
+        colorBase: '#fff',
+        colorBaseInverse: '#333',
+        colorBorder: '#e6e6e6',
+        borderRadius: '2px',
+      },
+    }"
+  >
+    <div id="app-root" :style="`min-width: ${state.collapsed ? '744px' : '884px'}`">
+      <div class="app-box">
+        <!-- 菜单 -->
+        <div class="menu" :style="`width: ${state.collapsed ? '80px' : '220px'}`">
+          <div class="nav-item" @click.stop="state.collapsed = !state.collapsed">
+            <a-tooltip placement="right">
+              <UnorderedListOutlined />
+            </a-tooltip>
+          </div>
+          <a-menu
+              v-model:selectedKeys="menu.selectedKeys"
+              mode="inline"
+              theme="light"
+              :inline-collapsed="state.collapsed"
+          >
+            <a-menu-item @click="clickMenu(item)" :key="item.path" v-for="item in menu.list">
+              <router-link :to="item.path">
             <span>
               <component :is="item.icon"></component>
               <span>{{item.name}}</span>
             </span>
-            </router-link>
-          </a-menu-item>
-        </a-menu>
+              </router-link>
+            </a-menu-item>
+          </a-menu>
+        </div>
+        <!-- 内容 -->
+        <div class="content">
+          <router-view v-slot="{ Component }">
+            <transition>
+              <component :is="Component"></component>
+            </transition>
+          </router-view>
+        </div>
       </div>
-      <!-- 内容 -->
-      <div class="content">
-        <router-view v-slot="{ Component }">
-          <transition>
-            <component :is="Component"></component>
-          </transition>
-        </router-view>
+      <!-- 底部 command -->
+      <div class="command-box">
+        <terminal :ref="el => terminal = el" />
       </div>
     </div>
-    <!-- 底部 command -->
-    <div class="command-box">
-      <terminal :ref="el => terminal = el" />
-    </div>
-  </div>
+  </a-config-provider>
 </template>
 <script>
   import { reactive, onMounted } from 'vue';
@@ -88,7 +108,20 @@
   }
 </script>
 <style lang="less">
-#app {
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#app-root {
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -99,6 +132,7 @@
   justify-content: flex-start;
   width: 100vw;
   height: 100vh;
+  overflow: hidden;
 }
 .app-box {
   display: flex;
@@ -106,7 +140,6 @@
   justify-content: flex-start;
   align-items: flex-start;
   width: 100vw;
-  height: auto;
   flex: 1;
   overflow: auto;
 }

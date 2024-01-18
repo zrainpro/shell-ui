@@ -6,7 +6,7 @@ case `uname` in
 esac
 
 if [ -x "$basedir/node" ]; then
-exec "$basedir/node"  "$basedir/node_modules/shell-ui-database/lib/userScript/{{command}}.js" "$@"
+exec "$basedir/node"  "$HOME/.shell-ui/lib/userScript/{{command}}.js" "$@"
 else
-exec node  "$basedir/node_modules/shell-ui-database/lib/userScript/{{command}}.js" "$@"
+exec node  "$HOME/.shell-ui/lib/userScript/{{command}}.js" "$@"
 fi

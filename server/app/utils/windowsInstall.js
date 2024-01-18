@@ -1,5 +1,5 @@
 const shell = require('shelljs');
-const fs = require('fs');
+const fs = require('../../../utils/fs');
 const path = require('path')
 
 module.exports = function (paths, command) {

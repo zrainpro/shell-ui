@@ -2,7 +2,7 @@ const path = require('path');
 const inquirer = require('inquirer');
 const createInstruct = require('./create');
 const editInstruct = require('./edit');
-const { rootPath } = require('./config');
+const { homePath } = require('./config');
 
 /**
  * 导入指令
@@ -19,7 +19,7 @@ async function importInstruct({ _this, json, onRepeat = '', onAliasRepeat = '' }
     const ignores = []; // 记录用户手动忽略的数据, 只记录根指令
     const ignoreChild = []; // 记录用户手动忽略的子指令数据
     // 获取目前已经存在的指令
-    let currentInstruct = require(path.resolve(rootPath, '../shell-ui-database/json/shell.json'));
+    let currentInstruct = require(path.resolve(homePath, './.shell-ui/json/shell.json'));
     currentInstruct = currentInstruct.shell || {};
 
     // todo 解耦逻辑, 抽离 utils 处理逻辑
@@ -101,7 +101,7 @@ async function importInstruct({ _this, json, onRepeat = '', onAliasRepeat = '' }
             suffix = itemChoose === 'add' ? '_alias_repeat' : '';
         } else {
             // 找出是否与 alias 重复
-            if (currentInstructArr.find(_ => _.alias === command.command || _.alias === command.alias)) {
+            if (currentInstructArr.find(_ => _.alias === command.command || (_.alias && _.alias === command.alias))) {
                 if (!globalAliasChoose) {
                     const userChoose = await ask_user_alias(command, root);
                     switch (userChoose.repeat) {

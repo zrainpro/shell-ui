@@ -1,7 +1,7 @@
 const path = require("path");
-const fs = require("fs");
+const fs = require("../../../../utils/fs");
 const shell = require("shelljs");
-const { fileType, rootPath } = require('./config');
+const { fileType, rootPath, homePath } = require('./config');
 const windowInstall = require("../windowsInstall");
 const windowUnInstall = require("../windowuninstall");
 
@@ -17,13 +17,13 @@ function deletePackageShell(command) {
         // 删除指令的软链接并在 package 中移出对应指令
         deletePackage(command);
         // 删除创建的 js 文件
-        shell.rm('-f', path.resolve(rootPath, `../shell-ui-database/lib/userScript/${command.command}.js`));
+        shell.rm('-f', path.resolve(homePath, `./.shell-ui/lib/userScript/${command.command}.js`));
         // 如果之前是 shell 类型的, 应该删除掉对应创建的 shell 脚本
         if (fileType[command.type]) {
-            shell.rm('-f', path.resolve(rootPath, `../shell-ui-database/lib/userShell/${command.command}.${fileType[command.type]}`));
+            shell.rm('-f', path.resolve(homePath, `./.shell-ui/lib/userShell/${command.command}.${fileType[command.type]}`));
         }
         // 删除之前的 shell 子脚本
-        shell.rm('-rf', path.resolve(rootPath, `../shell-ui-database/lib/userShell/${command.command}`));
+        shell.rm('-rf', path.resolve(homePath, `./.shell-ui/lib/userShell/${command.command}`));
         resolve()
     })
 }
@@ -62,18 +62,19 @@ function deletePackage(command) {
 async function buildShell(command) {
     // 读取模板文件
     let template = fs.readFileSync(path.resolve(rootPath, './bin/script.template')).toString();
+    console.log('已经读取模版文件')
     // 替换字符串模板
     template = template.replace(/`\{\{command\}\}`/g, command.command);
     template = template.replace(/`'\{\{command\}\}'`/g, `'${command.command}'`);
     // 创建父级 js 脚本
-    fs.writeFileSync(path.resolve(rootPath, `../shell-ui-database/lib/userScript/${command.command}.js`), template);
+    fs.writeFileSync(path.resolve(homePath, `./.shell-ui/lib/userScript/${command.command}.js`), template);
     // 如果父脚本是 shell 类型的, 创建父脚本的 sh 文件
     if (fileType[command.type]) {
-        fs.writeFileSync(path.resolve(rootPath, `../shell-ui-database/lib/userShell/${command.command}.${fileType[command.type]}`), command.shell);
+        fs.writeFileSync(path.resolve(homePath, `./.shell-ui/lib/userShell/${command.command}.${fileType[command.type]}`), command.shell);
     }
     // 创建子脚本的存放目录
-    if (!fs.existsSync(path.resolve(rootPath, `../shell-ui-database/lib/userShell/${command.command}`))) {
-        fs.mkdirSync(path.resolve(rootPath, `../shell-ui-database/lib/userShell/${command.command}`));
+    if (!fs.existsSync(path.resolve(homePath, `./.shell-ui/lib/userShell/${command.command}`))) {
+        fs.mkdirSync(path.resolve(homePath, `./.shell-ui/lib/userShell/${command.command}`));
     }
     // 更新 package 文件重新 npm link
     await reLoadPackage(command);
@@ -90,7 +91,7 @@ function reLoadPackage (command) {
         const packageJson = new JSONDB({
             path: path.resolve(rootPath, './package.json')
         });
-        packageJson.get('bin')[command.command] = `../shell-ui-database/lib/userScript/${command.command}.js`;
+        packageJson.get('bin')[command.command] = path.resolve(homePath, `./.shell-ui/lib/userScript/${command.command}.js`);
         command.alias && (packageJson.get('bin')[command.alias] = packageJson.get('bin')[command.command]);
         packageJson.write();
         packageJson.destroy();
@@ -108,7 +109,7 @@ function reLoadPackage (command) {
                     if (fs.existsSync(tempPath) && fs.lstatSync(tempPath).isSymbolicLink(tempPath)) {
                         shell.rm('-r', tempPath);
                     }
-                    fs.symlinkSync(path.resolve(rootPath, `../shell-ui-database/lib/userScript/${command.command}.js`), tempPath);
+                    fs.symlinkSync(path.resolve(homePath, `./.shell-ui/lib/userScript/${command.command}.js`), tempPath);
                     shell.chmod('777', tempPath); // 程序可执行
                 });
             }

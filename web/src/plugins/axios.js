@@ -32,6 +32,7 @@ _axios.interceptors.response.use(
     const data = response.data;
     if (data.code === 0) {
       message.error(data.message)
+      return data;
     } else {
       return data;
     }
