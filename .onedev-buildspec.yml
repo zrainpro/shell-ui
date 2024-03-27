@@ -1,0 +1,16 @@
+version: 30
+jobs:
+- name: 更新到 github
+  steps:
+  - !PushRepository
+    name: github
+    remoteUrl: https://github.com/zrainpro/shell-ui.git
+    passwordSecret: access-token
+    force: false
+    condition: ALL_PREVIOUS_STEPS_WERE_SUCCESSFUL
+  triggers:
+  - !PullRequestMergeTrigger {}
+  retryCondition: never
+  maxRetries: 3
+  retryDelay: 30
+  timeout: 3600
