@@ -1,6 +1,6 @@
-version: 30
+version: 35
 jobs:
-- name: 更新到 github
+- name: 更新到其他仓库
   steps:
   - !PushRepository
     name: github
@@ -8,8 +8,23 @@ jobs:
     passwordSecret: access-token
     force: false
     condition: ALL_PREVIOUS_STEPS_WERE_SUCCESSFUL
+  - !PushRepository
+    name: gitee
+    remoteUrl: https://gitee.com/yufo/shell-ui.git
+    userName: 雨鱼
+    passwordSecret: access-token-gitee
+    force: true
+    condition: ALL_PREVIOUS_STEPS_WERE_SUCCESSFUL
+  paramSpecs:
+  - !CommitParam
+    name: commit
+    allowEmpty: false
   triggers:
-  - !PullRequestMergeTrigger {}
+  - !PullRequestMergeTrigger
+    paramMatrix:
+    - name: commit
+      valuesProvider: !IgnoreValues {}
+      secret: false
   retryCondition: never
   maxRetries: 3
   retryDelay: 30
