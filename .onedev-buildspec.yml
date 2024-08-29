@@ -5,7 +5,7 @@ jobs:
   - !PushRepository
     name: github
     remoteUrl: https://github.com/zrainpro/shell-ui.git
-    passwordSecret: access-token
+    passwordSecret: access-token-github
     force: false
     condition: ALL_PREVIOUS_STEPS_WERE_SUCCESSFUL
   - !PushRepository
