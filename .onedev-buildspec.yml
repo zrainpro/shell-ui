@@ -15,16 +15,6 @@ jobs:
     passwordSecret: access-token-gitee
     force: true
     condition: ALL_PREVIOUS_STEPS_WERE_SUCCESSFUL
-  paramSpecs:
-  - !CommitParam
-    name: commit
-    allowEmpty: false
-  triggers:
-  - !PullRequestMergeTrigger
-    paramMatrix:
-    - name: commit
-      valuesProvider: !IgnoreValues {}
-      secret: false
   retryCondition: never
   maxRetries: 3
   retryDelay: 30
