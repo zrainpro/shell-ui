@@ -1,19 +1,21 @@
-version: 35
+version: 40
 jobs:
-- name: 更新到其他仓库
+- name: 更新到github与gitee
   steps:
   - !PushRepository
     name: github
     remoteUrl: https://github.com/zrainpro/shell-ui.git
     passwordSecret: access-token-github
     force: false
-    condition: ALL_PREVIOUS_STEPS_WERE_SUCCESSFUL
+    condition: SUCCESSFUL
+    optional: false
   - !PushRepository
     name: gitee
     remoteUrl: https://gitee.com/yufo/shell-ui.git
     passwordSecret: access-token-gitee
     force: true
-    condition: ALL_PREVIOUS_STEPS_WERE_SUCCESSFUL
+    condition: SUCCESSFUL
+    optional: false
   retryCondition: never
   maxRetries: 3
   retryDelay: 30
