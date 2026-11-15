@@ -16,7 +16,7 @@ jobs:
   - type: PushRepository
     name: gitee
     remoteUrl: https://gitee.com/yufo/shell-ui.git
-    userName: 雨鱼
+    userName: yufo
     passwordSecret: access-token-gitee
     force: true
     condition: SUCCESSFUL
