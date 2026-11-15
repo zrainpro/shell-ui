@@ -1,22 +1,27 @@
-version: 40
+version: 59
 jobs:
 - name: 更新到github与gitee
+  executeInSandbox: false
   steps:
-  - !PushRepository
+  - type: PushRepository
     name: github
     remoteUrl: https://github.com/zrainpro/shell-ui.git
+    userName: 雨鱼
     passwordSecret: access-token-github
     force: false
     condition: SUCCESSFUL
     optional: false
-  - !PushRepository
+  - type: PushRepository
     name: gitee
     remoteUrl: https://gitee.com/yufo/shell-ui.git
+    userName: 雨鱼
     passwordSecret: access-token-gitee
     force: true
     condition: SUCCESSFUL
     optional: false
   retryCondition: never
-  maxRetries: 3
+  maxAttempts: 4
   retryDelay: 30
+  includeUpstreamWhenRebuild: false
+  includeDownstreamWhenRebuild: false
   timeout: 3600
