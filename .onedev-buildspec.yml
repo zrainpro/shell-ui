@@ -9,6 +9,7 @@ jobs:
     remoteUrl: https://github.com/zrainpro/shell-ui.git
     userName: zrainice
     passwordSecret: access-token-github
+    proxy: http://192.168.50.110:7890
     force: false
     condition: SUCCESSFUL
     optional: false
