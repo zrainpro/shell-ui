@@ -2,11 +2,12 @@ version: 59
 jobs:
 - name: 更新到github与gitee
   executeInSandbox: false
+  jobExecutor: local
   steps:
   - type: PushRepository
     name: github
     remoteUrl: https://github.com/zrainpro/shell-ui.git
-    userName: 雨鱼
+    userName: zrainice
     passwordSecret: access-token-github
     force: false
     condition: SUCCESSFUL
